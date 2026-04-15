@@ -143,13 +143,13 @@ export default function PerfilPage() {
               />
             )}
             <div className="flex gap-2">
-              <button className="h-9 px-4 rounded-xl border border-white/10 bg-elevated text-sm text-text-secondary hover-real:text-text-primary hover-real:border-white/20 transition-colors duration-200 cursor-pointer flex items-center gap-2">
+              <Link
+                href="/configuracoes"
+                className="h-9 px-4 rounded-xl border border-white/10 bg-elevated text-sm text-text-secondary hover-real:text-text-primary hover-real:border-white/20 transition-colors duration-200 cursor-pointer flex items-center gap-2"
+              >
                 <Edit2 size={12} />
                 Editar
-              </button>
-              <button className="h-9 w-9 rounded-xl border border-white/10 bg-elevated flex items-center justify-center text-text-secondary hover-real:text-text-primary hover-real:border-white/20 transition-colors duration-200 cursor-pointer">
-                <Share2 size={12} />
-              </button>
+              </Link>
             </div>
           </div>
 

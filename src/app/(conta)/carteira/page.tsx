@@ -321,14 +321,20 @@ function TicketCard({
         </div>
 
         <div className="flex items-center gap-2">
-          <button className="flex-1 h-10 rounded-xl bg-elevated border border-white/10 text-xs font-semibold text-text-primary hover-real:border-white/20 transition-colors duration-200 cursor-pointer active:scale-95 flex items-center justify-center gap-2">
+          <a
+            href="https://app.maisvanta.com/carteira"
+            className="flex-1 h-10 rounded-xl bg-elevated border border-white/10 text-xs font-semibold text-text-primary hover-real:border-white/20 transition-colors duration-200 cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+          >
             <Send size={12} />
             Transferir
-          </button>
-          <button className="flex-1 h-10 rounded-xl bg-gold text-black text-xs font-bold uppercase tracking-[0.18em] hover-real:brightness-110 transition-all duration-200 cursor-pointer active:scale-95 flex items-center justify-center gap-2">
+          </a>
+          <a
+            href="https://app.maisvanta.com/carteira"
+            className="flex-1 h-10 rounded-xl bg-gold text-black text-xs font-bold uppercase tracking-[0.18em] hover-real:brightness-110 transition-all duration-200 cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+          >
             <Ticket size={12} />
             Abrir QR
-          </button>
+          </a>
         </div>
       </div>
     </div>
