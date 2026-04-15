@@ -43,9 +43,9 @@ function formatDateLabel(dateStr: string): string {
   return `${dia} · ${num} ${mes} · ${hora}`;
 }
 
-function formatPrice(centavos: number | null): string {
-  if (!centavos || centavos === 0) return "Grátis";
-  return `R$ ${(centavos / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+function formatPrice(reais: number | null): string {
+  if (!reais || reais === 0) return "Grátis";
+  return `R$ ${Math.round(reais).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 }
 
 type EventoRow = {
@@ -67,28 +67,29 @@ type EventoRow = {
   classificacao_etaria: string;
   comunidade_id: string | null;
   mais_vanta_config_evento: { id: string; ativo: boolean }[];
-  variacoes_ingresso: {
+  lotes: {
     id: string;
     nome: string;
-    lotes: {
-      preco: number;
-      nome: string;
-      quantidade_total: number;
-      quantidade_vendida: number;
-      ativo: boolean;
+    ativo: boolean;
+    variacoes_ingresso: {
+      id: string;
+      valor: number;
+      limite: number;
+      vendidos: number;
     }[];
   }[];
 };
 
 function getLowestPrice(
-  variacoes: EventoRow["variacoes_ingresso"]
+  lotes: EventoRow["lotes"]
 ): number | null {
-  if (!variacoes || variacoes.length === 0) return null;
+  if (!lotes || lotes.length === 0) return null;
   let lowest: number | null = null;
-  for (const v of variacoes) {
-    for (const l of v.lotes || []) {
-      if (l.ativo && (lowest === null || l.preco < lowest)) {
-        lowest = l.preco;
+  for (const l of lotes) {
+    if (!l.ativo) continue;
+    for (const v of l.variacoes_ingresso || []) {
+      if (lowest === null || v.valor < lowest) {
+        lowest = v.valor;
       }
     }
   }
@@ -96,10 +97,7 @@ function getLowestPrice(
 }
 
 function getEventStatus(
-  row: Pick<
-    EventoRow,
-    "data_inicio" | "data_fim" | "variacoes_ingresso"
-  >
+  row: Pick<EventoRow, "data_inicio" | "data_fim" | "lotes">
 ): EventCardData["status"] {
   const now = new Date();
   const start = new Date(row.data_inicio);
@@ -108,15 +106,14 @@ function getEventStatus(
   if (start <= now && (!end || end >= now)) return "happening";
 
   // Check low stock
-  if (row.variacoes_ingresso) {
+  if (row.lotes) {
     let totalRemaining = 0;
     let totalCapacity = 0;
-    for (const v of row.variacoes_ingresso) {
-      for (const l of v.lotes || []) {
-        if (l.ativo) {
-          totalCapacity += l.quantidade_total;
-          totalRemaining += l.quantidade_total - l.quantidade_vendida;
-        }
+    for (const l of row.lotes) {
+      if (!l.ativo) continue;
+      for (const v of l.variacoes_ingresso || []) {
+        totalCapacity += v.limite;
+        totalRemaining += v.limite - v.vendidos;
       }
     }
     if (totalCapacity > 0 && totalRemaining / totalCapacity < 0.1) {
@@ -133,7 +130,7 @@ function getEventStatus(
 }
 
 function toEventCard(row: EventoRow): EventCardData {
-  const lowestPrice = getLowestPrice(row.variacoes_ingresso);
+  const lowestPrice = getLowestPrice(row.lotes);
   const coords = row.coords as { lat: number; lng: number } | null;
 
   return {
@@ -172,9 +169,9 @@ export async function getPublicEvents(options?: {
       descricao, endereco, foto, estilos, coords, publicado,
       status_evento, categoria, classificacao_etaria, comunidade_id,
       mais_vanta_config_evento ( id, ativo ),
-      variacoes_ingresso (
-        id, nome,
-        lotes ( preco, nome, quantidade_total, quantidade_vendida, ativo )
+      lotes (
+        id, nome, ativo,
+        variacoes_ingresso ( id, valor, limite, vendidos )
       )
     `
     )
@@ -213,9 +210,9 @@ export async function getEventBySlug(
       descricao, endereco, foto, estilos, coords, publicado,
       status_evento, categoria, classificacao_etaria, comunidade_id,
       mais_vanta_config_evento ( id, ativo ),
-      variacoes_ingresso (
-        id, nome,
-        lotes ( preco, nome, quantidade_total, quantidade_vendida, ativo )
+      lotes (
+        id, nome, ativo,
+        variacoes_ingresso ( id, valor, limite, vendidos )
       )
     `
     )

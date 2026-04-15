@@ -29,9 +29,9 @@ function formatDateLabel(dateStr: string): string {
   return `${dias[date.getDay()]} · ${date.getDate()} ${meses[date.getMonth()]} · ${date.getHours()}h`;
 }
 
-function formatPrice(centavos: number | null): string {
-  if (!centavos || centavos === 0) return "Grátis";
-  return `R$ ${(centavos / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
+function formatPrice(reais: number | null): string {
+  if (!reais || reais === 0) return "Grátis";
+  return `R$ ${Math.round(reais).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 }
 
 type EventoRow = {
@@ -48,15 +48,15 @@ type EventoRow = {
   estilos: string[] | null;
   coords: { lat: number; lng: number } | null;
   mais_vanta_config_evento: { id: string; ativo: boolean }[];
-  variacoes_ingresso: {
+  lotes: {
     id: string;
     nome: string;
-    lotes: {
-      preco: number;
-      nome: string;
-      quantidade_total: number;
-      quantidade_vendida: number;
-      ativo: boolean;
+    ativo: boolean;
+    variacoes_ingresso: {
+      id: string;
+      valor: number;
+      limite: number;
+      vendidos: number;
     }[];
   }[];
 };
@@ -67,14 +67,13 @@ function toEventCard(row: EventoRow): EventCardData {
   let totalRemaining = 0;
   let totalCapacity = 0;
 
-  if (row.variacoes_ingresso) {
-    for (const v of row.variacoes_ingresso) {
-      for (const l of v.lotes || []) {
-        if (l.ativo) {
-          if (lowestPrice === null || l.preco < lowestPrice) lowestPrice = l.preco;
-          totalCapacity += l.quantidade_total;
-          totalRemaining += l.quantidade_total - l.quantidade_vendida;
-        }
+  if (row.lotes) {
+    for (const l of row.lotes) {
+      if (!l.ativo) continue;
+      for (const v of l.variacoes_ingresso || []) {
+        if (lowestPrice === null || v.valor < lowestPrice) lowestPrice = v.valor;
+        totalCapacity += v.limite;
+        totalRemaining += v.limite - v.vendidos;
       }
     }
   }
@@ -126,9 +125,9 @@ export function useEvents() {
         descricao, endereco, foto, estilos, coords, publicado,
         status_evento, categoria, classificacao_etaria, comunidade_id,
         mais_vanta_config_evento ( id, ativo ),
-        variacoes_ingresso (
-          id, nome,
-          lotes ( preco, nome, quantidade_total, quantidade_vendida, ativo )
+        lotes (
+          id, nome, ativo,
+          variacoes_ingresso ( id, valor, limite, vendidos )
         )
       `)
       .eq("publicado", true)
