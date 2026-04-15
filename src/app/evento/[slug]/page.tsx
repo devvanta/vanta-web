@@ -81,14 +81,6 @@ export default async function EventPage({
     )
     .slice(0, 3);
 
-  const lineUp = event.lineUp && event.lineUp.length > 0
-    ? event.lineUp
-    : [
-        { name: "Abertura", role: "Residente da casa", time: "22h – 0h" },
-        { name: "Headliner", role: event.genre ?? "Convidado", time: "0h – 2h" },
-        { name: "Encerramento", role: "Residente da casa", time: "2h – 4h" },
-      ];
-
   const description =
     event.description ??
     `${event.name} acontece no ${event.venue}, em ${event.city}. Abertura ${event.dateLabel}. Três sets com DJs locais e convidados.`;
@@ -207,37 +199,6 @@ export default async function EventPage({
               <p className="text-text-secondary leading-relaxed">
                 {description}
               </p>
-            </section>
-
-            {/* Line-up */}
-            <section>
-              <span className="kicker mb-3 inline-block">line-up</span>
-              <h2 className="text-2xl md:text-3xl mb-5">Na pista, no horário.</h2>
-              <ul className="space-y-3">
-                {lineUp.map((act, i) => (
-                  <li
-                    key={`${act.name}-${i}`}
-                    className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-white/5 hover-real:border-white/15 transition-colors duration-200"
-                  >
-                    <div
-                      className="h-14 w-14 rounded-xl shrink-0"
-                      style={{
-                        background:
-                          i === 1
-                            ? "linear-gradient(135deg, rgba(255,211,0,0.25), #080604)"
-                            : "linear-gradient(135deg, #28221a, #080604)",
-                      }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold">{act.name}</p>
-                      <p className="text-xs text-text-muted mt-0.5">
-                        {act.role}
-                      </p>
-                    </div>
-                    <span className="kicker text-[0.6rem]">{act.time}</span>
-                  </li>
-                ))}
-              </ul>
             </section>
 
             {/* Localização */}

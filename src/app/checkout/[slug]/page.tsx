@@ -337,6 +337,14 @@ export default function CheckoutPage() {
       data: { session },
     } = await supabase.auth.getSession();
 
+    if (!session?.access_token) {
+      setError("Sessão expirada. Faça login novamente.");
+      setSubmitting(false);
+      submitLock.current = false;
+      window.location.href = `/entrar?next=/checkout/${slug}`;
+      return;
+    }
+
     const fnRes = await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-ticket-checkout`,
       {
