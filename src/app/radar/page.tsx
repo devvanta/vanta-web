@@ -324,10 +324,16 @@ export default function RadarPage() {
                   const dist = getDistLabel(e);
                   return (
                     <li key={e.slug}>
-                      <button
-                        onClick={() => setSelectedSlug(e.slug)}
+                      <Link
+                        href={`/evento/${e.slug}`}
+                        onClick={(ev) => {
+                          if (!active) {
+                            ev.preventDefault();
+                            setSelectedSlug(e.slug);
+                          }
+                        }}
                         className={cn(
-                          "w-full text-left p-3 rounded-xl border flex items-start gap-3 transition-colors duration-200 cursor-pointer",
+                          "block w-full text-left p-3 rounded-xl border flex items-start gap-3 transition-colors duration-200 cursor-pointer",
                           active
                             ? "bg-gold/10 border-gold/40"
                             : "bg-card border-white/5 hover-real:border-white/15"
@@ -345,18 +351,25 @@ export default function RadarPage() {
                             {e.venue} · {e.dateLabel}
                             {dist && ` · ${dist}`}
                           </p>
-                          {genre && (
-                            <span
-                              className={cn(
-                                "inline-block mt-1.5 px-2 py-0.5 rounded-full text-[0.55rem] font-semibold uppercase tracking-[0.14em]",
-                                genre.badgeClass
-                              )}
-                            >
-                              {genre.label}
-                            </span>
-                          )}
+                          <div className="flex items-center gap-2 mt-1.5">
+                            {genre && (
+                              <span
+                                className={cn(
+                                  "inline-block px-2 py-0.5 rounded-full text-[0.55rem] font-semibold uppercase tracking-[0.14em]",
+                                  genre.badgeClass
+                                )}
+                              >
+                                {genre.label}
+                              </span>
+                            )}
+                            {active && (
+                              <span className="text-[0.6rem] text-gold font-semibold flex items-center gap-1">
+                                Ver evento <ArrowRight size={10} />
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </button>
+                      </Link>
                     </li>
                   );
                 })}
@@ -369,7 +382,14 @@ export default function RadarPage() {
             <RadarMap
               events={filtered}
               selectedSlug={selectedSlug}
-              onSelect={setSelectedSlug}
+              onSelect={(slug) => {
+                if (slug && selectedSlug === slug) {
+                  // Second click on same pin → navigate to event
+                  window.location.href = `/evento/${slug}`;
+                } else {
+                  setSelectedSlug(slug);
+                }
+              }}
               center={center}
               userLocation={userLocation}
               selectedRadius={selectedRadius}
