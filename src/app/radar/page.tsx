@@ -1,20 +1,27 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  ArrowRight,
   Calendar,
   ChevronRight,
+  Crosshair,
   Crown,
+  Loader2,
+  LocateFixed,
   MapPin,
+  Minus,
   Navigation,
+  Plus,
   Radio,
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { useEvents } from "@/lib/supabase/use-events";
 import { genres, genreBySlug } from "@/lib/genres";
 import { cn } from "@/lib/utils";
+import type { EventCardData } from "@/components/site/event-card";
 
 const RadarMap = dynamic(
   () => import("@/components/site/radar-map").then((m) => m.RadarMap),
@@ -31,15 +38,51 @@ const RadarMap = dynamic(
   }
 );
 
+function distanceKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): number {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) *
+      Math.cos((b.lat * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+}
+
 export default function RadarPage() {
-  const { events: allEvents } = useEvents();
+  const { events: allEvents, loading } = useEvents();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [city, setCity] = useState<string>("all");
   const [genreSlug, setGenreSlug] = useState<string>("all");
   const [maisVantaOnly, setMaisVantaOnly] = useState(false);
+  const [selectedRadius, setSelectedRadius] = useState<number | null>(null);
+  const [userLocation, setUserLocation] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [zoomAction, setZoomAction] = useState<"in" | "out" | null>(null);
+  const [recenterTrigger, setRecenterTrigger] = useState(0);
+
+  // Geolocation on mount
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) =>
+        setUserLocation({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        }),
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }, []);
 
   const withCoords = useMemo(
-    () => allEvents.filter((e) => e.lat !== undefined && e.lng !== undefined),
+    () => allEvents.filter((e) => e.lat != null && e.lng != null),
     [allEvents]
   );
 
@@ -48,20 +91,19 @@ export default function RadarPage() {
       if (city !== "all" && e.city !== city) return false;
       if (genreSlug !== "all" && e.genre !== genreSlug) return false;
       if (maisVantaOnly && !e.maisVanta) return false;
+      if (selectedRadius && userLocation && e.lat != null && e.lng != null) {
+        if (distanceKm(userLocation, { lat: e.lat, lng: e.lng }) > selectedRadius)
+          return false;
+      }
       return true;
     });
-  }, [withCoords, city, genreSlug, maisVantaOnly]);
+  }, [withCoords, city, genreSlug, maisVantaOnly, selectedRadius, userLocation]);
 
   const availableCities = useMemo(() => {
-    const used = [
-      ...new Set(withCoords.map((e) => e.city).filter(Boolean)),
-    ];
+    const used = [...new Set(withCoords.map((e) => e.city).filter(Boolean))];
     return used
       .sort()
-      .map((c) => ({
-        name: c,
-        slug: c.toLowerCase().replace(/\s+/g, "-"),
-      }));
+      .map((c) => ({ name: c, slug: c.toLowerCase().replace(/\s+/g, "-") }));
   }, [withCoords]);
 
   const availableGenres = useMemo(() => {
@@ -69,10 +111,26 @@ export default function RadarPage() {
     return genres.filter((g) => used.has(g.slug));
   }, [withCoords]);
 
-  const selectedEvent =
-    filtered.find((e) => e.slug === selectedSlug) ?? null;
+  const selectedEvent = filtered.find((e) => e.slug === selectedSlug) ?? null;
+
+  // Closest event to user
+  const closestSlug = useMemo(() => {
+    if (!userLocation) return null;
+    let min = Infinity;
+    let slug: string | null = null;
+    for (const e of filtered) {
+      if (e.lat == null || e.lng == null) continue;
+      const d = distanceKm(userLocation, { lat: e.lat, lng: e.lng });
+      if (d < min) {
+        min = d;
+        slug = e.slug;
+      }
+    }
+    return slug;
+  }, [filtered, userLocation]);
 
   const center: [number, number] = useMemo(() => {
+    if (userLocation) return [userLocation.lat, userLocation.lng];
     if (filtered.length === 0) return [-22.9105, -43.1768];
     if (city !== "all" && filtered.length > 0) {
       const avg = filtered.reduce(
@@ -85,7 +143,18 @@ export default function RadarPage() {
       return [avg.lat / filtered.length, avg.lng / filtered.length];
     }
     return [-22.9105, -43.1768];
-  }, [city, filtered]);
+  }, [userLocation, city, filtered]);
+
+  const handleZoom = useCallback((dir: "in" | "out") => {
+    setZoomAction(dir);
+    setTimeout(() => setZoomAction(null), 100);
+  }, []);
+
+  const getDistLabel = (e: EventCardData) => {
+    if (!userLocation || e.lat == null || e.lng == null) return null;
+    const d = distanceKm(userLocation, { lat: e.lat, lng: e.lng });
+    return d < 1 ? `${Math.round(d * 1000)}m` : `${d.toFixed(1)}km`;
+  };
 
   return (
     <>
@@ -101,8 +170,8 @@ export default function RadarPage() {
             Onde tá rolando, <span className="text-gold">agora</span>.
           </h1>
           <p className="text-text-secondary text-lg max-w-2xl">
-            Mapa interativo com eventos próximos. Filtre por cidade, gênero ou
-            só Mais Vanta. Clique num pin pra ver os detalhes.
+            Mapa interativo com eventos próximos. Filtre por cidade, gênero,
+            distância ou só Mais Vanta. Clique num pin pra ver os detalhes.
           </p>
         </Container>
       </section>
@@ -112,6 +181,62 @@ export default function RadarPage() {
           {/* Sidebar */}
           <aside className="space-y-6">
             <div className="space-y-5">
+              {/* Location */}
+              <div>
+                <label className="ui-label block mb-2">Localização</label>
+                {userLocation ? (
+                  <div className="flex items-center gap-2 text-sm text-success mb-3">
+                    <LocateFixed size={14} />
+                    <span>Localização ativa</span>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      navigator.geolocation?.getCurrentPosition(
+                        (pos) =>
+                          setUserLocation({
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                          }),
+                        () => {},
+                        { enableHighAccuracy: true, timeout: 10000 }
+                      );
+                    }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold text-black text-sm font-bold uppercase tracking-widest w-full justify-center cursor-pointer active:scale-95 transition-all mb-3"
+                  >
+                    <LocateFixed size={14} />
+                    Ativar localização
+                  </button>
+                )}
+
+                {/* Radius filter */}
+                {userLocation && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { label: "Todos", value: null },
+                      { label: "5 km", value: 5 },
+                      { label: "10 km", value: 10 },
+                      { label: "25 km", value: 25 },
+                      { label: "50 km", value: 50 },
+                    ].map((opt) => (
+                      <button
+                        key={opt.label}
+                        onClick={() => setSelectedRadius(opt.value)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest cursor-pointer transition-all border active:scale-95",
+                          selectedRadius === opt.value
+                            ? "bg-gold text-black border-gold shadow-[0_0_8px_rgba(255,211,0,0.3)]"
+                            : "bg-input text-text-muted border-white/5 hover-real:border-white/15"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* City */}
               <div>
                 <label className="ui-label block mb-2">Cidade</label>
                 <div className="relative">
@@ -137,6 +262,7 @@ export default function RadarPage() {
                 </div>
               </div>
 
+              {/* Genre */}
               <div>
                 <label className="ui-label block mb-2">Gênero</label>
                 <div className="flex flex-wrap gap-2">
@@ -168,6 +294,7 @@ export default function RadarPage() {
                 </div>
               </div>
 
+              {/* Mais Vanta */}
               <button
                 onClick={() => setMaisVantaOnly((v) => !v)}
                 className={cn(
@@ -194,6 +321,7 @@ export default function RadarPage() {
                 {filtered.map((e) => {
                   const active = selectedSlug === e.slug;
                   const genre = e.genre ? genreBySlug.get(e.genre) : null;
+                  const dist = getDistLabel(e);
                   return (
                     <li key={e.slug}>
                       <button
@@ -215,6 +343,7 @@ export default function RadarPage() {
                           </p>
                           <p className="text-[0.65rem] text-text-muted truncate">
                             {e.venue} · {e.dateLabel}
+                            {dist && ` · ${dist}`}
                           </p>
                           {genre && (
                             <span
@@ -242,44 +371,115 @@ export default function RadarPage() {
               selectedSlug={selectedSlug}
               onSelect={setSelectedSlug}
               center={center}
-              userLocation={null}
-              selectedRadius={null}
-              closestSlug={null}
-              zoomAction={null}
-              recenterTrigger={0}
+              userLocation={userLocation}
+              selectedRadius={selectedRadius}
+              closestSlug={closestSlug}
+              zoomAction={zoomAction}
+              recenterTrigger={recenterTrigger}
             />
 
+            {/* Loading */}
+            {loading && filtered.length === 0 && (
+              <div className="absolute inset-0 z-[500] flex items-center justify-center pointer-events-none">
+                <div className="bg-black/80 backdrop-blur-sm border border-white/10 p-6 rounded-full shadow-2xl">
+                  <Loader2 size="2rem" className="text-gold animate-spin" />
+                </div>
+              </div>
+            )}
+
+            {/* Empty state */}
+            {!loading && filtered.length === 0 && (
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[500] pointer-events-auto">
+                <div className="bg-black/80 backdrop-blur-sm border border-white/10 rounded-2xl px-5 py-4 shadow-2xl text-center max-w-[16.25rem]">
+                  <p className="text-zinc-400 text-xs mb-3">
+                    Nenhum evento encontrado com esses filtros
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Zoom + recenter controls */}
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 pointer-events-auto z-[1000]">
+              <button
+                aria-label="Centralizar"
+                onClick={() => {
+                  setSelectedSlug(null);
+                  setRecenterTrigger((n) => n + 1);
+                }}
+                className={cn(
+                  "w-10 h-10 backdrop-blur border rounded-full flex items-center justify-center shadow-lg transition-all active:scale-95 cursor-pointer",
+                  userLocation
+                    ? "bg-zinc-900/90 border-gold/30 text-gold shadow-gold/10"
+                    : "bg-zinc-800/50 border-white/5 text-zinc-400"
+                )}
+              >
+                <Crosshair size="1.125rem" />
+              </button>
+              <div className="h-4" />
+              <button
+                onClick={() => handleZoom("in")}
+                className="w-10 h-10 bg-zinc-900/90 backdrop-blur border border-white/10 rounded-full flex items-center justify-center text-zinc-300 shadow-lg active:bg-zinc-800 cursor-pointer"
+              >
+                <Plus size="1.125rem" />
+              </button>
+              <button
+                onClick={() => handleZoom("out")}
+                className="w-10 h-10 bg-zinc-900/90 backdrop-blur border border-white/10 rounded-full flex items-center justify-center text-zinc-300 shadow-lg active:bg-zinc-800 cursor-pointer"
+              >
+                <Minus size="1.125rem" />
+              </button>
+            </div>
+
+            {/* Active event card */}
             {selectedEvent && (
-              <div className="absolute bottom-4 left-4 right-4 md:left-6 md:right-6 lg:left-auto lg:right-6 lg:max-w-sm">
+              <div className="absolute bottom-4 left-4 right-4 lg:left-auto lg:right-14 lg:max-w-sm z-[1000] pointer-events-auto">
                 <Link
                   href={`/evento/${selectedEvent.slug}`}
-                  className="bg-[#0F0D08]/95 backdrop-blur-sm border border-gold/20 rounded-[1.5rem] p-4 shadow-2xl flex gap-3 active:scale-[0.98] transition-transform"
+                  className="bg-[#0F0D08]/95 backdrop-blur-sm border border-gold/20 rounded-[1.5rem] p-3 shadow-2xl flex gap-3 active:scale-[0.98] transition-transform"
                 >
                   <div
-                    className="h-16 w-16 rounded-xl shrink-0"
+                    className="w-16 h-16 rounded-xl overflow-hidden shrink-0"
                     style={{ background: selectedEvent.gradient }}
                   />
                   <div className="flex-1 min-w-0 flex flex-col justify-center">
-                    <p className="kicker text-[0.6rem] mb-1">
-                      {selectedEvent.dateLabel}
-                    </p>
-                    <h3 className="font-display text-base leading-tight mb-1 truncate">
+                    <span className="text-[0.5rem] font-bold text-gold uppercase tracking-wider mb-0.5">
+                      {selectedEvent.genre || "evento"}
+                    </span>
+                    <h3 className="font-display text-sm text-white leading-tight mb-0.5 truncate">
                       {selectedEvent.name}
                     </h3>
-                    <p className="text-xs text-text-muted truncate mb-2">
-                      {selectedEvent.venue} · {selectedEvent.city}
+                    <p className="text-zinc-400 text-[0.625rem] mb-1.5">
+                      {selectedEvent.dateLabel}
+                      {(() => {
+                        const dist = getDistLabel(selectedEvent);
+                        return dist ? ` · ${dist}` : null;
+                      })()}
+                      {" · "}
+                      <span className="text-gold font-semibold">
+                        {selectedEvent.priceLabel}
+                      </span>
                     </p>
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                        <Calendar size={12} className="text-gold" />
-                        <span>A partir de</span>
-                        <span className="text-gold font-semibold">
-                          {selectedEvent.priceLabel}
-                        </span>
-                      </div>
-                      <span className="text-xs font-bold text-gold flex items-center gap-1">
-                        Ver <ChevronRight size={12} />
+                      <span className="text-[0.625rem] font-bold text-white flex items-center">
+                        Ver detalhes
+                        <ArrowRight size="0.75rem" className="ml-1 text-gold" />
                       </span>
+                      {selectedEvent.lat != null && selectedEvent.lng != null && (
+                        <button
+                          onClick={(ev) => {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            window.open(
+                              `https://www.google.com/maps/dir/?api=1&destination=${selectedEvent.lat},${selectedEvent.lng}`,
+                              "_blank"
+                            );
+                          }}
+                          className="flex items-center gap-1 text-[0.625rem] font-bold text-gold active:opacity-50"
+                        >
+                          <Navigation size="0.625rem" />
+                          Ir
+                        </button>
+                      )}
                     </div>
                   </div>
                 </Link>
