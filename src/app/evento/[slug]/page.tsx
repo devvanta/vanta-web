@@ -161,16 +161,6 @@ export default async function EventPage({
                 <Info icon={Users} label="+18 com documento original" />
               </div>
 
-              <div className="flex gap-3">
-                <Button variant="ghost" size="sm">
-                  <Heart size={14} />
-                  Salvar
-                </Button>
-                <Button variant="ghost" size="sm">
-                  <Share2 size={14} />
-                  Compartilhar
-                </Button>
-              </div>
             </div>
 
             <div

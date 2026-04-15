@@ -120,8 +120,8 @@ export default function CriarContaPage() {
       return;
     }
 
-    // Update profile with DOB
-    if (data.user) {
+    // Update profile with DOB (only if session exists — skipped when email confirmation required)
+    if (data.session && data.user) {
       await supabase.rpc("user_profile_update", {
         p_fields: {
           data_nascimento: toISO(dataNasc),

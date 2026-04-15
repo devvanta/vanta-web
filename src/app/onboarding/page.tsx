@@ -82,18 +82,15 @@ export default function OnboardingPage() {
       setCityLoading(true);
       try {
         const res = await fetch(
-          `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?orderBy=nome`
+          `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(cityQuery)}&orderBy=nome`
         );
         const data: { nome: string; microrregiao?: { mesorregiao?: { UF?: { sigla?: string } } } }[] = await res.json();
-        const needle = cityQuery.toLowerCase();
-        const filtered = data
-          .filter((c) => c.nome.toLowerCase().includes(needle))
-          .slice(0, 10)
-          .map((c) => ({
+        setCities(
+          data.slice(0, 10).map((c) => ({
             nome: c.nome,
             uf: c.microrregiao?.mesorregiao?.UF?.sigla ?? "",
-          }));
-        setCities(filtered);
+          }))
+        );
       } catch {
         setCities([]);
       }
@@ -133,9 +130,13 @@ export default function OnboardingPage() {
   }, [selectedInterests]);
 
   const finish = useCallback(() => {
+    if (!selectedCity) {
+      setStep("cidade");
+      return;
+    }
     localStorage.setItem("vanta_onboarding_done", "1");
     window.location.href = "/";
-  }, []);
+  }, [selectedCity]);
 
   return (
     <Container size="sm" className="py-16 md:py-24">
