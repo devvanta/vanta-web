@@ -332,7 +332,16 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Paid checkout — call edge function via fetch (not invoke) to get error body
+    // Refresh session to get a fresh JWT, then call edge function
+    const { data: { user: freshUser }, error: refreshErr } = await supabase.auth.getUser();
+    if (refreshErr || !freshUser) {
+      setError("Sessão expirada. Faça login novamente.");
+      setSubmitting(false);
+      submitLock.current = false;
+      window.location.href = `/entrar?next=/checkout/${slug}`;
+      return;
+    }
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
