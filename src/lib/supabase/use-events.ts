@@ -34,8 +34,34 @@ function formatPrice(centavos: number | null): string {
   return `R$ ${(centavos / 100).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ".")}`;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function toEventCard(row: any): EventCardData {
+type EventoRow = {
+  id: string;
+  slug: string | null;
+  nome: string;
+  local: string;
+  cidade: string | null;
+  data_inicio: string;
+  data_fim: string | null;
+  descricao: string;
+  endereco: string | null;
+  foto: string | null;
+  estilos: string[] | null;
+  coords: { lat: number; lng: number } | null;
+  mais_vanta_config_evento: { id: string; ativo: boolean }[];
+  variacoes_ingresso: {
+    id: string;
+    nome: string;
+    lotes: {
+      preco: number;
+      nome: string;
+      quantidade_total: number;
+      quantidade_vendida: number;
+      ativo: boolean;
+    }[];
+  }[];
+};
+
+function toEventCard(row: EventoRow): EventCardData {
   const coords = row.coords as { lat: number; lng: number } | null;
   let lowestPrice: number | null = null;
   let totalRemaining = 0;
@@ -110,7 +136,7 @@ export function useEvents() {
       .order("data_inicio", { ascending: true })
       .then(({ data, error }) => {
         if (!error && data) {
-          setEvents(data.map(toEventCard));
+          setEvents((data as unknown as EventoRow[]).map(toEventCard));
         }
         setLoading(false);
       });
