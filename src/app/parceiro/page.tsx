@@ -20,6 +20,8 @@ import {
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { JsonLd } from "@/components/site/json-ld";
+import { serviceSchema } from "@/lib/schema";
 
 const pains = [
   {
@@ -154,6 +156,15 @@ export default function ParceiroPage() {
 
   return (
     <>
+      <JsonLd
+        data={serviceSchema({
+          name: "VANTA para casas e produtores",
+          description:
+            "Painel B2B multi-tenant com RBAC de 6 cargos, fluxos auditáveis de publicação/reembolso/saque, Stripe Connect e checkout completo. Alternativa a Sympla e Ingresse com taxa menor e operação real da portaria.",
+          serviceType: "Event management platform",
+          path: "/parceiro",
+        })}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-white/5">
         <div

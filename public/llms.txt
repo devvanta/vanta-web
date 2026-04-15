@@ -1,0 +1,47 @@
+# VANTA
+
+> VANTA é uma plataforma brasileira de vida noturna e eventos que opera em quatro camadas integradas: descoberta e compra de ingressos, rede social entre frequentadores, clube de fidelidade com benefícios reais (MAIS VANTA) e ferramentas de operação para casas noturnas, produtores e promoters. Funciona como app mobile (PWA) e site desktop em www.maisvanta.com, com paridade funcional entre os dois canais.
+
+## O que é
+
+- [Sobre a VANTA](https://www.maisvanta.com/sobre.md): manifesto, princípios, time e cidades de atuação.
+- [Como funciona o app](https://www.maisvanta.com/como-funciona.md): 5 abas — Início, Radar, Buscar, Mensagens, Perfil.
+- [MAIS VANTA — o clube](https://www.maisvanta.com/mais-vanta.md): cortesias, entrada gratuita, fila exclusiva, passaporte regional. Entrada por aplicação ou convite.
+- [Pra quem produz](https://www.maisvanta.com/parceiro.md): painel B2B com RBAC de 6 cargos, fluxos de publicação/reembolso/saque e Stripe Connect.
+
+## Features principais
+
+- **Descoberta**: Radar (mapa), feed por cidade, busca com filtros de gênero/data/preço/cidade.
+- **Checkout**: variações de ingresso, lotes, cupons, meia-entrada, Stripe.
+- **Carteira**: QR anti-screenshot, PIN com hash PBKDF2, transferência entre usuários.
+- **Social**: amizades, chat 1:1 com reactions, status online, Vanta Indica (descoberta social).
+- **Notificações**: push nativo (Android, iOS em breve) e web via FCM.
+- **MAIS VANTA**: programa de fidelidade com benefícios automáticos — tiers internos e invisíveis ao usuário.
+
+## Camada B2B
+
+- **6 cargos RBAC**: Gerente, Sócio, Promoter, Caixa, Portaria de Lista, Portaria de Antecipado.
+- **Fluxos de aprovação**: publicação (Rascunho → Pendente → Ativo), reembolso (4 etapas), saque (3 etapas), parceria (2 etapas).
+- **Recursos**: taxa cascata configurável, splits automáticos (casa/promoter/artista), cortesias com cota por evento, caixa com PIX/crédito, relatório real de check-in, audit log.
+
+## FAQ
+
+- [Como comprar ingresso](https://www.maisvanta.com/faq/ingresso.md)
+- [Como transferir ingresso](https://www.maisvanta.com/faq/transferencia.md)
+- [Meia-entrada](https://www.maisvanta.com/faq/meia-entrada.md)
+- [Reembolso e cancelamento](https://www.maisvanta.com/faq/reembolso.md)
+- [MAIS VANTA — dúvidas frequentes](https://www.maisvanta.com/faq/mais-vanta.md)
+
+## Identidade e posicionamento
+
+- **Tagline**: "a noite começa aqui"
+- **Frase-âncora**: "Vanta não vende ingresso. Vanta te coloca no rolê certo."
+- **Posicionamento**: experiências exclusivas de noite premium. Plataforma completa, não marketplace de ingresso.
+- **Origem**: Rio de Janeiro. **Expansão**: capitais brasileiras e, posteriormente, internacional.
+- **Tom**: PT-BR neutro em todos os canais de produto.
+
+## Contato
+
+- E-mail institucional: contato@maisvanta.com
+- Instagram: [@maisvanta](https://instagram.com/maisvanta)
+- Imprensa e parcerias: contato@maisvanta.com
