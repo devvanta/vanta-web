@@ -1,213 +1,249 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 import {
   MapContainer,
   Marker,
-  Popup,
   TileLayer,
+  Circle,
   useMap,
+  useMapEvents,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { EventCardData } from "@/components/site/event-card";
 
-function createPin(isMaisVanta: boolean, isActive: boolean): L.DivIcon {
-  const size = isActive ? 36 : 28;
-  const color = "#FFD300";
-  const ring = isMaisVanta ? color : "rgba(255,211,0,0.35)";
+/* ── Pin Icons ─────────────────────────────────────────── */
+
+const PIN_SRC = "/pin-gold.png";
+const PIN_RATIO = 0.695;
+
+interface PinOpts {
+  isActive?: boolean;
+  isLive?: boolean;
+  isClosest?: boolean;
+  isMV?: boolean;
+}
+
+function createEventIcon(imageUrl: string | undefined, opts: PinOpts = {}) {
+  const { isActive = false, isLive = false, isClosest = false, isMV = false } = opts;
+
+  const w = isActive ? 90 : isLive ? 78 : 70;
+  const h = Math.round(w / PIN_RATIO);
+  const photoSize = Math.round(w * 0.44);
+  const photoLeft = Math.round((w - photoSize) / 2);
+  const photoTop = Math.round(h * 0.22);
+
+  let glowFilter: string;
+  if (isActive) {
+    glowFilter = "drop-shadow(0 0 16px rgba(255,211,0,0.8)) drop-shadow(0 4px 10px rgba(0,0,0,0.4))";
+  } else if (isLive) {
+    glowFilter = "drop-shadow(0 0 14px rgba(255,211,0,0.7)) drop-shadow(0 3px 8px rgba(0,0,0,0.3))";
+  } else if (isMV) {
+    glowFilter = "drop-shadow(0 0 10px rgba(255,211,0,0.55)) drop-shadow(0 3px 6px rgba(0,0,0,0.3))";
+  } else if (isClosest) {
+    glowFilter = "drop-shadow(0 0 8px rgba(255,211,0,0.45)) drop-shadow(0 2px 6px rgba(0,0,0,0.3))";
+  } else {
+    glowFilter = "drop-shadow(0 0 6px rgba(255,211,0,0.3)) drop-shadow(0 2px 4px rgba(0,0,0,0.25))";
+  }
+
+  const pulseStyle = isLive ? "animation:pulse 2s cubic-bezier(0.4,0,0.6,1) infinite;" : "";
+
+  // If gradient background instead of URL photo
+  const isGradient = !imageUrl || imageUrl.startsWith("radial-gradient") || imageUrl.startsWith("linear-gradient") || imageUrl.startsWith("url(");
+  const photoHtml = isGradient
+    ? `<div style="width:100%;height:100%;background:linear-gradient(135deg, rgba(255,211,0,0.3), #080604);"></div>`
+    : `<img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;" referrerpolicy="no-referrer" />`;
+
   return L.divIcon({
-    className: "vanta-pin",
-    html: `
-      <div style="position:relative;width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;">
-        ${
-          isActive
-            ? `<div style="position:absolute;inset:-4px;border-radius:50%;border:1.5px solid ${color};animation:vanta-ping 1.6s cubic-bezier(0,0,0.2,1) infinite;"></div>`
-            : ""
-        }
-        <div style="width:${size}px;height:${size}px;border-radius:50%;background:#0f0d08;border:1.5px solid ${ring};display:flex;align-items:center;justify-content:center;box-shadow:0 0 12px rgba(255,211,0,0.35);">
-          <div style="width:${Math.max(6, size / 3)}px;height:${Math.max(6, size / 3)}px;border-radius:50%;background:${color};"></div>
-        </div>
+    className: "vanta-event-pin",
+    html: `<div style="position:relative;width:${w}px;height:${h}px;filter:${glowFilter};overflow:hidden;${pulseStyle}">
+      <div style="position:absolute;top:${photoTop}px;left:${photoLeft}px;width:${photoSize}px;height:${photoSize}px;border-radius:50%;overflow:hidden;background:#000;z-index:1;">
+        ${photoHtml}
       </div>
-    `,
+      <img src="${PIN_SRC}" style="position:absolute;top:0;left:0;width:${w}px;height:${h}px;z-index:2;pointer-events:none;" />
+    </div>`,
+    iconSize: [w, h],
+    iconAnchor: [w / 2, h],
+    popupAnchor: [0, -h],
+  });
+}
+
+function createUserIcon() {
+  const size = 36;
+  return L.divIcon({
+    className: "vanta-user-icon",
+    html: `<div style="position:relative;width:${size}px;height:${size}px;">
+      <div style="position:absolute;inset:-4px;background:rgba(255,211,0,0.3);border-radius:50%;animation:vanta-ping 2s infinite;"></div>
+      <div style="width:${size}px;height:${size}px;border:2px solid #FFD300;border-radius:50%;overflow:hidden;box-shadow:0 0 12px rgba(255,211,0,0.5);background:#3b82f6;"></div>
+    </div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   });
 }
 
-function RecenterOnSelection({
-  selectedSlug,
-  events,
+/* ── Map Controller ────────────────────────────────────── */
+
+function MapController({
+  zoomAction,
+  activeEventCoords,
+  userLocation,
+  recenterTrigger,
 }: {
-  selectedSlug: string | null;
-  events: EventCardData[];
+  zoomAction: "in" | "out" | null;
+  activeEventCoords: { lat: number; lng: number } | null;
+  userLocation: { lat: number; lng: number } | null;
+  recenterTrigger: number;
 }) {
   const map = useMap();
+
+  useMapEvents({ moveend: () => {} });
+
   useEffect(() => {
-    if (!selectedSlug) return;
-    const ev = events.find((e) => e.slug === selectedSlug);
-    if (!ev || ev.lat === undefined || ev.lng === undefined) return;
-    map.flyTo([ev.lat, ev.lng], 14, { duration: 0.7 });
-  }, [selectedSlug, events, map]);
+    if (zoomAction === "in") map.zoomIn();
+    if (zoomAction === "out") map.zoomOut();
+  }, [zoomAction, map]);
+
+  // Center on user when location obtained (1x)
+  useEffect(() => {
+    if (userLocation && !activeEventCoords) {
+      map.flyTo([userLocation.lat, userLocation.lng], 13, { animate: true, duration: 1.2 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userLocation]);
+
+  // Recenter button
+  useEffect(() => {
+    if (recenterTrigger > 0 && userLocation) {
+      map.flyTo([userLocation.lat, userLocation.lng], Math.max(map.getZoom(), 13), { animate: true, duration: 0.8 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recenterTrigger]);
+
+  // Fly to active event
+  useEffect(() => {
+    if (activeEventCoords) {
+      map.flyTo([activeEventCoords.lat, activeEventCoords.lng], Math.max(map.getZoom(), 14), { animate: true, duration: 0.8 });
+    }
+  }, [activeEventCoords, map]);
+
   return null;
 }
+
+/* ── Exported Map Component ────────────────────────────── */
 
 export function RadarMap({
   events,
   selectedSlug,
   onSelect,
   center,
+  userLocation,
+  selectedRadius,
+  closestSlug,
+  zoomAction,
+  recenterTrigger,
 }: {
   events: EventCardData[];
   selectedSlug: string | null;
   onSelect: (slug: string | null) => void;
   center: [number, number];
+  userLocation: { lat: number; lng: number } | null;
+  selectedRadius: number | null;
+  closestSlug: string | null;
+  zoomAction: "in" | "out" | null;
+  recenterTrigger: number;
 }) {
-  const hasCoords = useMemo(
-    () => events.filter((e) => e.lat !== undefined && e.lng !== undefined),
-    [events],
-  );
-  const mapRef = useRef<L.Map | null>(null);
+  const activeEvent = selectedSlug ? events.find((e) => e.slug === selectedSlug) : null;
+  const activeCoords = activeEvent?.lat != null && activeEvent?.lng != null
+    ? { lat: activeEvent.lat, lng: activeEvent.lng }
+    : null;
 
   return (
-    <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10 bg-card">
+    <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/10">
       <style>{`
-        .vanta-pin { background: transparent !important; border: none !important; }
-        .leaflet-container {
-          background: #080604 !important;
-          font-family: var(--font-poppins), system-ui, sans-serif;
-        }
-        .leaflet-tile {
-          filter: brightness(0.55) contrast(1.1) hue-rotate(-10deg) saturate(0.7);
-        }
-        .leaflet-control-attribution {
-          background: rgba(8,6,4,0.6) !important;
-          color: rgba(148,163,184,0.6) !important;
-          backdrop-filter: blur(6px);
-          font-size: 10px !important;
-          padding: 2px 6px !important;
-          border-radius: 6px !important;
-        }
-        .leaflet-control-attribution a {
-          color: rgba(203,213,225,0.7) !important;
-        }
-        .leaflet-control-zoom {
-          border: 1px solid rgba(255,255,255,0.1) !important;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
-        }
-        .leaflet-control-zoom a {
-          background: #0f0d08 !important;
-          color: #FFD300 !important;
-          border: none !important;
-          border-bottom: 1px solid rgba(255,255,255,0.05) !important;
-        }
-        .leaflet-control-zoom a:hover {
-          background: #1a1610 !important;
-        }
-        .leaflet-popup-content-wrapper {
-          background: #1a1610 !important;
-          border: 1px solid rgba(255,255,255,0.08) !important;
-          border-radius: 16px !important;
-          color: #f1f5f9 !important;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.7) !important;
-        }
-        .leaflet-popup-tip {
-          background: #1a1610 !important;
-        }
-        .leaflet-popup-content {
-          margin: 14px 16px !important;
-          font-family: var(--font-poppins), system-ui, sans-serif;
-        }
-        .leaflet-popup-close-button {
-          color: rgba(148,163,184,0.8) !important;
-          padding: 10px !important;
-        }
-        @keyframes vanta-ping {
-          0% { transform: scale(1); opacity: 0.8; }
-          80%, 100% { transform: scale(2.1); opacity: 0; }
-        }
+        .vanta-event-pin, .vanta-user-icon { background: transparent !important; border: none !important; }
+        .leaflet-container { background: #0F0D08 !important; font-family: var(--font-poppins), system-ui, sans-serif; }
+        .leaflet-control-attribution { display: none !important; }
+        .leaflet-control-zoom { display: none !important; }
+        @keyframes vanta-ping { 0% { transform: scale(1); opacity: 0.8; } 80%, 100% { transform: scale(2.1); opacity: 0; } }
       `}</style>
       <MapContainer
         center={center}
-        zoom={12}
+        zoom={13}
         minZoom={3}
-        maxZoom={18}
+        maxZoom={19}
         scrollWheelZoom
+        zoomControl={false}
+        attributionControl={false}
         className="h-full w-full"
-        ref={(m) => {
-          if (m) mapRef.current = m;
-        }}
+        style={{ background: "#0F0D08" }}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution="&copy; CARTO"
+          maxZoom={20}
         />
-        <RecenterOnSelection selectedSlug={selectedSlug} events={events} />
-        {hasCoords.map((e) => (
-          <Marker
-            key={e.slug}
-            position={[e.lat as number, e.lng as number]}
-            icon={createPin(
-              Boolean(e.maisVanta),
-              selectedSlug === e.slug || e.status === "happening",
-            )}
-            eventHandlers={{
-              click: () => onSelect(e.slug),
+        <MapController
+          zoomAction={zoomAction}
+          activeEventCoords={activeCoords}
+          userLocation={userLocation}
+          recenterTrigger={recenterTrigger}
+        />
+
+        {/* Radius circle */}
+        {userLocation && selectedRadius && (
+          <Circle
+            center={[userLocation.lat, userLocation.lng]}
+            radius={selectedRadius * 1000}
+            pathOptions={{
+              color: "#FFD300",
+              weight: 1,
+              opacity: 0.4,
+              fillColor: "#FFD300",
+              fillOpacity: 0.05,
+              dashArray: "6 4",
             }}
-          >
-            <Popup>
-              <p
-                style={{
-                  fontFamily: "var(--font-playfair), Georgia, serif",
-                  fontSize: "15px",
-                  margin: 0,
-                  marginBottom: 6,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.02em",
-                }}
-              >
-                {e.name}
-              </p>
-              <p
-                style={{
-                  fontSize: "12px",
-                  color: "rgba(203,213,225,0.8)",
-                  margin: 0,
-                  marginBottom: 4,
-                }}
-              >
-                {e.venue} · {e.city}
-              </p>
-              <p
-                style={{
-                  fontSize: "11px",
-                  color: "rgba(148,163,184,0.7)",
-                  margin: 0,
-                  marginBottom: 10,
-                }}
-              >
-                {e.dateLabel}
-              </p>
-              <a
-                href={`/evento/${e.slug}`}
-                style={{
-                  display: "inline-block",
-                  background: "#FFD300",
-                  color: "#000",
-                  textDecoration: "none",
-                  padding: "6px 14px",
-                  borderRadius: "10px",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.18em",
-                }}
-              >
-                Ver evento
-              </a>
-            </Popup>
-          </Marker>
-        ))}
+          />
+        )}
+
+        {/* User location marker */}
+        {userLocation && (
+          <Marker
+            position={[userLocation.lat, userLocation.lng]}
+            icon={createUserIcon()}
+            zIndexOffset={2000}
+          />
+        )}
+
+        {/* Event pins */}
+        {events.map((e) => {
+          if (e.lat == null || e.lng == null) return null;
+          const isActive = selectedSlug === e.slug;
+          const isLive = e.status === "happening";
+          const isClosest = closestSlug === e.slug;
+          // Extract photo URL from gradient string if it's a url()
+          let photoUrl: string | undefined;
+          if (e.gradient.startsWith("url(")) {
+            const match = e.gradient.match(/url\(([^)]+)\)/);
+            if (match) photoUrl = match[1];
+          }
+          return (
+            <Marker
+              key={e.slug}
+              position={[e.lat, e.lng]}
+              icon={createEventIcon(photoUrl, {
+                isActive,
+                isLive,
+                isClosest,
+                isMV: e.maisVanta,
+              })}
+              zIndexOffset={isActive ? 1000 : isClosest ? 600 : 500}
+              eventHandlers={{
+                click: () => onSelect(isActive ? null : e.slug),
+              }}
+            />
+          );
+        })}
       </MapContainer>
     </div>
   );
