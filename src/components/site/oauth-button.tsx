@@ -10,10 +10,15 @@ export function OAuthButton({ provider }: { provider: Provider }) {
 
   async function handleOAuth() {
     const supabase = createClient();
+    // Preserve ?next= param through OAuth flow
+    const nextParam = new URLSearchParams(window.location.search).get("next");
+    const callbackUrl = nextParam
+      ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextParam)}`
+      : `${window.location.origin}/auth/callback`;
     await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: callbackUrl,
       },
     });
   }
