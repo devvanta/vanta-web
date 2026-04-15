@@ -15,7 +15,6 @@ import {
   Lock,
   MapPin,
   Share2,
-  Sparkles,
   Ticket,
   Users,
 } from "lucide-react";
@@ -46,14 +45,8 @@ export default function PerfilPage() {
   const [stats, setStats] = useState([
     { label: "Eventos", value: "—" },
     { label: "Amigos", value: "—" },
-    { label: "Cortesias", value: "—" },
-    { label: "Indicações", value: "—" },
+    { label: "Favoritos", value: "—" },
   ]);
-
-  const indications = [
-    { who: "Ana Souza", venue: "Sunset Privilege", when: "há 2 dias", accepted: true },
-    { who: "Matheus Lopes", venue: "Techno Underground", when: "há 1 semana", accepted: false },
-  ];
 
   useEffect(() => {
     const supabase = createClient();
@@ -85,18 +78,18 @@ export default function PerfilPage() {
       }
 
       // Fetch stats
-      const [ticketsRes, friendsRes] = await Promise.all([
+      const [ticketsRes, friendsRes, favoritosRes] = await Promise.all([
         supabase.from("tickets_caixa").select("id", { count: "exact", head: true }).eq("owner_id", user.id),
         supabase.from("friendships").select("id", { count: "exact", head: true })
-          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+          .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
           .eq("status", "accepted"),
+        supabase.from("evento_favoritos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
 
       setStats([
         { label: "Eventos", value: String(ticketsRes.count ?? 0) },
         { label: "Amigos", value: String(friendsRes.count ?? 0) },
-        { label: "Cortesias", value: "—" },
-        { label: "Indicações", value: "—" },
+        { label: "Favoritos", value: String(favoritosRes.count ?? 0) },
       ]);
     }
 
@@ -244,81 +237,27 @@ export default function PerfilPage() {
         </ul>
       </section>
 
-      {/* Mais Vanta status */}
+      {/* Mais Vanta */}
       <section className="rounded-2xl border border-gold/20 bg-gradient-to-br from-card to-midnight p-6 glow-gold">
         <div className="flex items-start gap-4">
           <div className="h-11 w-11 rounded-xl bg-gold/15 border border-gold/40 flex items-center justify-center text-gold shrink-0">
             <Crown size={18} strokeWidth={2.5} />
           </div>
           <div className="flex-1">
-            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-              <h2 className="text-lg">Você é Mais Vanta</h2>
-              <span className="kicker">ativo</span>
-            </div>
+            <h2 className="text-lg mb-2">Mais Vanta</h2>
             <p className="text-sm text-text-muted leading-relaxed mb-5">
-              Seus benefícios estão ativos em todas as casas parceiras. Você
-              tem 6 cortesias disponíveis esta semana e prioridade em novos
-              lotes.
+              Cortesias, prioridade em lotes e benefícios automáticos em casas
+              parceiras.
             </p>
             <Link
               href="/mais-vanta"
               className="inline-flex items-center gap-1 text-sm text-gold hover-real:underline"
             >
-              Ver meus benefícios
+              Saiba mais
               <ArrowRight size={12} />
             </Link>
           </div>
         </div>
-      </section>
-
-      {/* Indicações */}
-      <section className="rounded-2xl border border-white/5 bg-card p-6">
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <Sparkles size={14} className="text-gold" />
-            <h2 className="text-lg">Vanta Indica</h2>
-          </div>
-          <Link
-            href="/amigos"
-            className="text-xs text-text-muted hover-real:text-gold transition-colors duration-200"
-          >
-            Ver todos
-          </Link>
-        </div>
-        <ul className="space-y-3">
-          {indications.map((ind) => (
-            <li
-              key={`${ind.who}-${ind.venue}`}
-              className="flex items-start gap-3 p-3 rounded-xl bg-elevated/50 border border-white/5"
-            >
-              <div
-                className="h-10 w-10 rounded-full shrink-0 border border-white/10"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(255,211,0,0.25), #080604)",
-                }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm">
-                  <span className="font-semibold">{ind.who}</span>{" "}
-                  <span className="text-text-muted">te indicou</span>{" "}
-                  <span className="font-semibold text-gold">{ind.venue}</span>
-                </p>
-                <p className="text-xs text-text-muted mt-0.5">{ind.when}</p>
-              </div>
-              {ind.accepted ? (
-                <span className="inline-flex items-center gap-1 text-xs text-success shrink-0">
-                  <Check size={12} />
-                  Aceita
-                </span>
-              ) : (
-                <button className="text-xs text-gold hover-real:underline shrink-0">
-                  Aceitar
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
       </section>
 
       {/* Atalhos */}
@@ -345,7 +284,7 @@ export default function PerfilPage() {
         >
           <Heart size={16} className="text-gold mb-3" />
           <p className="text-sm font-semibold mb-1">Favoritos</p>
-          <p className="text-xs text-text-muted">8 eventos salvos</p>
+          <p className="text-xs text-text-muted">{stats[2].value} eventos salvos</p>
         </Link>
       </section>
     </div>
