@@ -143,6 +143,9 @@ export default function ParceiroPage() {
 
       if (insertError) {
         console.error("Insert error:", insertError);
+        setError("Erro ao enviar. Tente novamente.");
+        setLoading(false);
+        return;
       }
       setSubmitted(true);
     } catch {

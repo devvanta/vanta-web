@@ -126,8 +126,10 @@ export default function MaisVantaPage() {
         });
 
       if (insertError) {
-        // Table might not exist yet — fallback gracefully
         console.error("Insert error:", insertError);
+        setError("Erro ao enviar. Tente novamente.");
+        setLoading(false);
+        return;
       }
       setSubmitted(true);
     } catch {

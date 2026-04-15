@@ -92,6 +92,7 @@ export default function CheckoutPage() {
   // Submit
   const [submitting, setSubmitting] = useState(false);
   const submitLock = useRef(false);
+  const userDobRef = useRef<string | null>(null);
 
   // Cancelled return
   const [cancelled, setCancelled] = useState(false);
@@ -121,13 +122,17 @@ export default function CheckoutPage() {
 
         const { data: profile } = await supabase
           .from("profiles")
-          .select("cpf, telefone_ddd, telefone_numero")
+          .select("cpf, telefone_ddd, telefone_numero, data_nascimento")
           .eq("id", user.id)
           .maybeSingle();
 
         if (profile) {
           setNeedsCpf(!profile.cpf);
           setNeedsTelefone(!profile.telefone_ddd || !profile.telefone_numero);
+          // Store DOB for age check later
+          if (profile.data_nascimento) {
+            userDobRef.current = profile.data_nascimento as string;
+          }
         }
       }
 
@@ -289,6 +294,22 @@ export default function CheckoutPage() {
   // Submit checkout
   const handleSubmit = useCallback(async () => {
     if (submitLock.current || totalItems === 0 || !evento || !lote) return;
+
+    // Age validation
+    if (evento.classificacao_etaria && userDobRef.current) {
+      const minAge = evento.classificacao_etaria === "18+" ? 18 : evento.classificacao_etaria === "16+" ? 16 : 0;
+      if (minAge > 0) {
+        const birth = new Date(userDobRef.current);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        if (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate())) age--;
+        if (age < minAge) {
+          setError(`Este evento é restrito para maiores de ${minAge} anos.`);
+          return;
+        }
+      }
+    }
+
     submitLock.current = true;
     setSubmitting(true);
     setError(null);

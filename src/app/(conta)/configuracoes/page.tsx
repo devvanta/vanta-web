@@ -35,13 +35,18 @@ export default function ConfiguracoesPage() {
     } = await supabase.auth.getUser();
 
     if (user) {
-      // Mark profile as excluded
-      await supabase.rpc("user_profile_update", {
+      const { error: rpcError } = await supabase.rpc("user_profile_update", {
         p_fields: {
           excluido: true,
           excluido_em: new Date().toISOString(),
         },
       });
+
+      if (rpcError) {
+        setDeleting(false);
+        alert("Erro ao excluir conta. Tente novamente ou entre em contato.");
+        return;
+      }
     }
 
     await supabase.auth.signOut();

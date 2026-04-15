@@ -255,17 +255,16 @@ export default function NotificacoesPage() {
         <ul className="rounded-2xl border border-white/5 bg-card overflow-hidden">
           {filtered.map((n, i) => {
             const Icon = iconFor[n.tipo] || Bell;
-            const Wrapper = n.link ? Link : "div";
-            const wrapperProps = n.link
-              ? { href: n.link }
-              : {};
             return (
               <li
                 key={n.id}
                 className={cn(i > 0 && "border-t border-white/5")}
               >
                 <div
-                  onClick={() => !n.lida && markRead(n.id)}
+                  onClick={() => {
+                    if (!n.lida) markRead(n.id);
+                    if (n.link) window.location.href = n.link;
+                  }}
                   className={cn(
                     "flex items-start gap-4 p-5 transition-colors duration-200 cursor-pointer",
                     !n.lida
