@@ -3,7 +3,14 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, Check, Mail, AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  ArrowRight,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+} from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/site/logo";
@@ -20,7 +27,8 @@ export default function EntrarPage() {
 
 function EntrarContent() {
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [senha, setSenha] = useState("");
+  const [showSenha, setShowSenha] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -28,27 +36,32 @@ function EntrarContent() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim() || !senha) return;
 
     setLoading(true);
     setError(null);
 
     const supabase = createClient();
-    const { error: otpError } = await supabase.auth.signInWithOtp({
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-      },
+      password: senha,
     });
 
     setLoading(false);
 
-    if (otpError) {
-      setError("Não foi possível enviar o link. Tente novamente.");
+    if (signInError) {
+      if (signInError.message.includes("Invalid login")) {
+        setError("E-mail ou senha incorretos.");
+      } else if (signInError.message.includes("Email not confirmed")) {
+        setError("E-mail não confirmado. Verifique sua caixa de entrada.");
+      } else {
+        setError("Não foi possível entrar. Tente novamente.");
+      }
       return;
     }
 
-    setSent(true);
+    // Redirect to home on success
+    window.location.href = "/";
   }
 
   return (
@@ -62,7 +75,7 @@ function EntrarContent() {
             Entre na VANTA.
           </h1>
           <p className="text-text-secondary">
-            A noite começa aqui. A gente envia um link seguro pro seu e-mail.
+            A noite começa aqui.
           </p>
         </div>
 
@@ -73,73 +86,83 @@ function EntrarContent() {
           </div>
         )}
 
-        {sent ? (
-          <div className="rounded-3xl border border-gold/30 bg-card p-8 text-center glow-gold">
-            <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-success/15 border border-success/40 text-success mb-5">
-              <Check size={22} strokeWidth={2.5} />
-            </div>
-            <h2 className="text-2xl mb-3 leading-tight">Link enviado!</h2>
-            <p className="text-text-secondary text-sm mb-6 leading-relaxed">
-              Abra seu e-mail e clique no link mágico pra entrar. O link vale
-              por 15 minutos.
-            </p>
-            <p className="text-xs text-text-muted">
-              Enviado pra <span className="text-text-primary">{email}</span>
-            </p>
-            <button
-              onClick={() => {
-                setSent(false);
-                setEmail("");
-              }}
-              className="mt-6 text-xs text-gold hover-real:underline cursor-pointer"
-            >
-              Usar outro e-mail
-            </button>
-          </div>
-        ) : (
-          <div className="rounded-3xl border border-white/5 bg-card p-8">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="ui-label block mb-2">E-mail</label>
-                <div className="relative">
-                  <Mail
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-                  />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="seu@email.com"
-                    required
-                    autoFocus
-                    className="w-full bg-input border border-white/5 rounded-xl pl-9 pr-3 py-3 text-sm placeholder:text-text-subtle focus:border-gold/30 focus:outline-none transition-colors duration-200"
-                  />
-                </div>
+        <div className="rounded-3xl border border-white/5 bg-card p-8">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="ui-label block mb-2">E-mail</label>
+              <div className="relative">
+                <Mail
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  required
+                  autoFocus
+                  className="w-full bg-input border border-white/5 rounded-xl pl-9 pr-3 py-3 text-sm placeholder:text-text-subtle focus:border-gold/30 focus:outline-none transition-colors duration-200"
+                />
               </div>
-              {error && (
-                <p className="text-xs text-error">{error}</p>
-              )}
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                {loading ? "Enviando..." : "Enviar link mágico"}
-                {!loading && <ArrowRight size={16} />}
-              </Button>
-            </form>
-
-            <div className="flex items-center gap-3 my-6">
-              <div className="flex-1 h-px bg-white/5" />
-              <span className="text-[0.6rem] uppercase tracking-[0.24em] text-text-subtle">
-                ou continue com
-              </span>
-              <div className="flex-1 h-px bg-white/5" />
             </div>
 
-            <div className="space-y-2">
-              <OAuthButton provider="google" />
-              <OAuthButton provider="apple" />
+            <div>
+              <label className="ui-label block mb-2">Senha</label>
+              <div className="relative">
+                <Lock
+                  size={14}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
+                />
+                <input
+                  type={showSenha ? "text" : "password"}
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  placeholder="Sua senha"
+                  required
+                  className="w-full bg-input border border-white/5 rounded-xl pl-9 pr-10 py-3 text-sm placeholder:text-text-subtle focus:border-gold/30 focus:outline-none transition-colors duration-200"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSenha(!showSenha)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover-real:text-text-primary cursor-pointer"
+                >
+                  {showSenha ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
             </div>
+
+            {error && (
+              <div className="rounded-xl border border-error/30 bg-error/10 p-3 flex items-center gap-2 text-xs text-error">
+                <AlertCircle size={14} className="shrink-0" />
+                {error}
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              size="lg"
+              disabled={loading}
+            >
+              {loading ? "Entrando..." : "Entrar"}
+              {!loading && <ArrowRight size={16} />}
+            </Button>
+          </form>
+
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-white/5" />
+            <span className="text-[0.6rem] uppercase tracking-[0.18em] text-text-subtle">
+              ou continue com
+            </span>
+            <div className="flex-1 h-px bg-white/5" />
           </div>
-        )}
+
+          <div className="space-y-2">
+            <OAuthButton provider="google" />
+            <OAuthButton provider="apple" />
+          </div>
+        </div>
 
         <p className="text-xs text-text-muted text-center mt-6 leading-relaxed">
           Não tem conta?{" "}

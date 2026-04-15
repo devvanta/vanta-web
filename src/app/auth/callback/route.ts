@@ -10,6 +10,34 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      // Check if profile needs completion (OAuth users without DOB)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("data_nascimento")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!profile?.data_nascimento) {
+          return NextResponse.redirect(`${origin}/completar-perfil`);
+        }
+
+        // Check if onboarding is needed (no city set)
+        const { data: fullProfile } = await supabase
+          .from("profiles")
+          .select("cidade")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!fullProfile?.cidade) {
+          return NextResponse.redirect(`${origin}/onboarding`);
+        }
+      }
+
       return NextResponse.redirect(`${origin}${next}`);
     }
   }

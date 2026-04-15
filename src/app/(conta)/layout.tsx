@@ -17,6 +17,21 @@ export default async function ContaLayout({
     redirect("/entrar");
   }
 
+  // Check profile completion gate (same as app's CompletarPerfilSocial)
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("data_nascimento, cidade")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!profile?.data_nascimento) {
+    redirect("/completar-perfil");
+  }
+
+  if (!profile?.cidade) {
+    redirect("/onboarding");
+  }
+
   return (
     <Container size="lg" className="py-10 md:py-14">
       <div className="grid md:grid-cols-[260px_1fr] gap-8 items-start">
