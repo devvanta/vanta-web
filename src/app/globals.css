@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+/*
+ * VANTA V2 — Design System
+ * Tons quentes derivados do dourado, preto quente em 6 camadas,
+ * tipografia Playfair Display (display) + Poppins (UI)
+ */
+
+:root {
+  /* Superfícies — 6 camadas de preto quente */
+  --void: #080604;
+  --midnight: #0f0d08;
+  --card: #1a1610;
+  --elevated: #211c14;
+  --input: #1c1810;
+  --surface: #28221a;
+
+  /* Acento principal — ÚNICO tom de dourado aceito no VANTA */
+  --gold: #ffd300;
+
+  /* Texto */
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: rgba(148, 163, 184, 0.85);
+  --text-faint: rgba(100, 116, 139, 0.6);
+  --text-subtle: #64748b;
+
+  /* Estados */
+  --success: #34d399;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --info: #60a5fa;
+}
+
+@theme inline {
+  --color-void: var(--void);
+  --color-midnight: var(--midnight);
+  --color-card: var(--card);
+  --color-elevated: var(--elevated);
+  --color-input: var(--input);
+  --color-surface: var(--surface);
+
+  --color-gold: var(--gold);
+
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-faint: var(--text-faint);
+  --color-text-subtle: var(--text-subtle);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-info: var(--info);
+
+  --font-display: var(--font-playfair);
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-poppins);
+}
+
+html,
+body {
+  background: var(--void);
+  color: var(--text-primary);
+}
+
+body {
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  /* Gradiente master: dois halos dourado/âmbar vivos sobre preto quente */
+  background:
+    radial-gradient(
+      ellipse 90% 60% at 50% 0%,
+      rgba(255, 211, 0, 0.14),
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 70% 50% at 85% 100%,
+      rgba(255, 140, 20, 0.10),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse at center,
+      #160c04 0%,
+      #0a0604 45%,
+      #020202 100%
+    );
+  background-attachment: fixed;
+}
+
+/* Títulos: Playfair Display 700, SEMPRE EM CAIXA ALTA — nunca italic, nunca outro peso */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.font-display {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 700;
+  font-style: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+
+/* Kickers: Poppins 600, uppercase, tracking largo, cor dourada */
+.kicker {
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  font-size: 0.625rem;
+  color: var(--gold);
+}
+
+/* UI Label: Poppins 900, uppercase, tracking */
+.ui-label {
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.625rem;
+  color: var(--text-muted);
+}
+
+/* Efeitos utilitários do design system */
+
+.glass-premium {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.bg-noise {
+  position: relative;
+}
+.bg-noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("https://www.transparenttextures.com/patterns/carbon-fibre.png");
+  opacity: 0.03;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.glow-gold {
+  box-shadow: 0 0 50px rgba(255, 211, 0, 0.05);
+}
+
+.glow-gold-text {
+  text-shadow: 0 0 4px rgba(255, 211, 0, 0.5);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hover só em mouse real (nunca em touch) */
+@custom-variant hover-real (@media (hover: hover) and (pointer: fine));
+
+/* Respeitar preferências de movimento */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* Scrollbar discreta no preto quente */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--void);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--elevated);
+}
+
+/* Seleção com gold */
+::selection {
+  background: var(--gold);
+  color: #000;
+}
