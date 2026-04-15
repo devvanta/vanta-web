@@ -1,13 +1,27 @@
 "use client";
 
+import { createClient } from "@/lib/supabase/client";
+
 type Provider = "google" | "apple";
 
 export function OAuthButton({ provider }: { provider: Provider }) {
-  const label = provider === "google" ? "Continuar com Google" : "Continuar com Apple";
+  const label =
+    provider === "google" ? "Continuar com Google" : "Continuar com Apple";
+
+  async function handleOAuth() {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+  }
 
   return (
     <button
       type="button"
+      onClick={handleOAuth}
       className="w-full flex items-center justify-center gap-3 bg-elevated border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-text-primary hover-real:border-white/20 transition-colors duration-200 cursor-pointer active:scale-95"
     >
       <span className="h-5 w-5 flex items-center justify-center shrink-0">

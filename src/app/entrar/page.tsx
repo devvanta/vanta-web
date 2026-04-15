@@ -1,24 +1,54 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Check,
-  Mail,
-} from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ArrowRight, Check, Mail, AlertCircle } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/site/logo";
 import { OAuthButton } from "@/components/site/oauth-button";
+import { createClient } from "@/lib/supabase/client";
 
 export default function EntrarPage() {
+  return (
+    <Suspense>
+      <EntrarContent />
+    </Suspense>
+  );
+}
+
+function EntrarContent() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const authError = searchParams.get("error");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (email.trim()) setSent(true);
+    if (!email.trim()) return;
+
+    setLoading(true);
+    setError(null);
+
+    const supabase = createClient();
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    setLoading(false);
+
+    if (otpError) {
+      setError("Não foi possível enviar o link. Tente novamente.");
+      return;
+    }
+
+    setSent(true);
   }
 
   return (
@@ -35,6 +65,13 @@ export default function EntrarPage() {
             A noite começa aqui. A gente envia um link seguro pro seu e-mail.
           </p>
         </div>
+
+        {authError && (
+          <div className="rounded-2xl border border-error/30 bg-error/10 p-4 mb-6 flex items-center gap-3 text-sm text-error">
+            <AlertCircle size={16} className="shrink-0" />
+            Erro na autenticação. Tente novamente.
+          </div>
+        )}
 
         {sent ? (
           <div className="rounded-3xl border border-gold/30 bg-card p-8 text-center glow-gold">
@@ -80,9 +117,12 @@ export default function EntrarPage() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" size="lg">
-                Enviar link mágico
-                <ArrowRight size={16} />
+              {error && (
+                <p className="text-xs text-error">{error}</p>
+              )}
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? "Enviando..." : "Enviar link mágico"}
+                {!loading && <ArrowRight size={16} />}
               </Button>
             </form>
 
@@ -114,7 +154,10 @@ export default function EntrarPage() {
             termos de uso
           </Link>{" "}
           e a{" "}
-          <Link href="/privacidade" className="hover-real:text-text-muted underline">
+          <Link
+            href="/privacidade"
+            className="hover-real:text-text-muted underline"
+          >
             política de privacidade
           </Link>
           .

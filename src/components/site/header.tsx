@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/site/logo";
+import { createClient } from "@/lib/supabase/server";
 
 const nav = [
   { label: "Eventos", href: "/eventos" },
@@ -12,7 +13,19 @@ const nav = [
   { label: "Sobre", href: "/sobre" },
 ];
 
-export function Header() {
+export async function Header() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const displayName =
+    user?.user_metadata?.nome ||
+    user?.user_metadata?.full_name ||
+    user?.email?.split("@")[0];
+
+  const avatarUrl = user?.user_metadata?.avatar_url;
+
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-void/80 backdrop-blur-md">
       <Container size="lg">
@@ -39,15 +52,43 @@ export function Header() {
             >
               <Search size={14} />
             </Link>
-            <Link
-              href="/entrar"
-              className="hidden sm:inline text-sm text-text-secondary hover-real:text-text-primary transition-colors duration-200"
-            >
-              Entrar
-            </Link>
-            <Button href="/criar-conta" size="sm">
-              Criar conta
-            </Button>
+            {user ? (
+              <Link
+                href="/perfil"
+                className="flex items-center gap-2.5 rounded-full border border-white/10 pl-1 pr-3.5 py-1 hover-real:border-white/20 transition-colors duration-200"
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt=""
+                    className="h-7 w-7 rounded-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="h-7 w-7 rounded-full"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(255,211,0,0.35), #080604)",
+                    }}
+                  />
+                )}
+                <span className="text-sm text-text-secondary hidden sm:inline">
+                  {displayName}
+                </span>
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/entrar"
+                  className="hidden sm:inline text-sm text-text-secondary hover-real:text-text-primary transition-colors duration-200"
+                >
+                  Entrar
+                </Link>
+                <Button href="/criar-conta" size="sm">
+                  Criar conta
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </Container>

@@ -83,37 +83,39 @@ Todo dado hoje vem de arquivos locais. Trocar cada um por chamadas Supabase:
 ## Checklist de integração backend
 
 ### 1. Setup Supabase
-- [ ] Instalar `@supabase/supabase-js` e `@supabase/ssr`
-- [ ] Criar `src/lib/supabase/client.ts` (browser) e `src/lib/supabase/server.ts` (RSC/route handlers)
-- [ ] Criar `src/lib/supabase/middleware.ts` pro `proxy.ts` (next 16 = antigo middleware)
-- [ ] Adicionar `proxy.ts` na raiz do projeto com refresh de session
-- [ ] Variáveis em `.env.local`:
-  ```
-  NEXT_PUBLIC_SUPABASE_URL=
-  NEXT_PUBLIC_SUPABASE_ANON_KEY=
-  ```
+- [x] Instalar `@supabase/supabase-js` e `@supabase/ssr`
+- [x] Criar `src/lib/supabase/client.ts` (browser) e `src/lib/supabase/server.ts` (RSC/route handlers)
+- [x] Criar `src/lib/supabase/proxy.ts` pro `proxy.ts` (next 16 = antigo middleware)
+- [x] Adicionar `src/proxy.ts` na raiz do src com refresh de session
+- [x] Variáveis em `.env.local`
 
 ### 2. Auth
-- [ ] `/entrar`: `supabase.auth.signInWithOtp({ email })` no submit do magic link
-- [ ] Botões OAuth: `supabase.auth.signInWithOAuth({ provider: 'google' | 'apple' })`
-- [ ] `/criar-conta`: mesmo fluxo + update de `profiles.nome` após callback
-- [ ] Callback route: `src/app/auth/callback/route.ts` pra trocar o code por sessão
-- [ ] Logout: `supabase.auth.signOut()` (botão "Sair" em `user-sidebar.tsx`)
+- [x] `/entrar`: `supabase.auth.signInWithOtp({ email })` no submit do magic link
+- [x] Botões OAuth: `supabase.auth.signInWithOAuth({ provider: 'google' | 'apple' })`
+- [x] `/criar-conta`: mesmo fluxo + nome via `user_metadata`
+- [x] Callback route: `src/app/auth/callback/route.ts` pra trocar o code por sessão
+- [x] Logout: `supabase.auth.signOut()` (botão "Sair" em `user-sidebar.tsx`)
 
 ### 3. Guards
-- [ ] Criar `src/app/(conta)/layout.tsx` server-side que verifica sessão com `supabase.auth.getUser()` — se null, `redirect('/entrar')`
-- [ ] Header: mostrar avatar/nome quando autenticado, "Entrar / Criar conta" quando não
+- [x] `src/app/(conta)/layout.tsx` server-side que verifica sessão com `supabase.auth.getUser()` — se null, `redirect('/entrar')`
+- [x] Header: mostrar avatar/nome quando autenticado, "Entrar / Criar conta" quando não
 
 ### 4. Data fetching
-- [ ] Converter páginas públicas (RSC) pra `async` com fetch direto do Supabase
-- [ ] Converter páginas `(conta)/*` pra `async` com `user.id` na query
-- [ ] Trocar `mockEvents` por `supabase.from('eventos_publicos').select(...).order('data_inicio')`
+- [x] Home (/) — RSC com `getPublicEvents()` do Supabase
+- [x] /evento/[slug] — RSC com `getEventBySlug()` do Supabase
+- [x] /eventos — client-side com `useEvents()` hook
+- [x] /buscar — client-side com `useEvents()` hook
+- [x] /radar — client-side com `useEvents()` hook
+- [x] /perfil — client-side com queries em `profiles`, `ingressos`, `friendships`
+- [ ] /carteira — ainda com mocks (precisa join ingressos + variacoes + eventos)
+- [ ] /mensagens — ainda com mocks (precisa realtime)
+- [ ] /notificacoes — ainda com mocks (precisa realtime)
 
 ### 5. Tipos
-- [ ] Gerar tipos do Supabase: `supabase gen types typescript --project-id daldttuibmxwkpbqtebm > src/lib/database.types.ts`
-- [ ] Ajustar `EventCardData` em `src/components/site/event-card.tsx` pra aceitar o shape do banco (ou criar `toCardData()` mapper)
+- [x] Gerar tipos do Supabase: `database.types.ts` (211k chars, 106 tabelas)
+- [x] Mapper `toEventCard()` em `src/lib/supabase/queries.ts` e `use-events.ts`
 
-### 6. Realtime (opcional, fase 2)
+### 6. Realtime (fase 2)
 - [ ] Mensagens: subscribe em `mensagens_mensagens` por `conversa_id`
 - [ ] Notificações: subscribe em `notificacoes` por `user_id`
 - [ ] Radar: marcadores "acontecendo agora" com realtime

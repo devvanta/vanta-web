@@ -4,8 +4,7 @@ import { useMemo, useState } from "react";
 import { Crown, Filter, MapPin, Search, X } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { EventCard } from "@/components/site/event-card";
-import { mockEvents } from "@/lib/mock-events";
-import { cities } from "@/lib/cities";
+import { useEvents } from "@/lib/supabase/use-events";
 import { genres } from "@/lib/genres";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +67,7 @@ function inPriceBand(cents: number | undefined, band: PriceBand): boolean {
 }
 
 export default function EventosPage() {
+  const { events: allEvents, loading } = useEvents();
   const [city, setCity] = useState<string>("all");
   const [datePreset, setDatePreset] = useState<DatePreset>("all");
   const [priceBand, setPriceBand] = useState<PriceBand>("all");
@@ -76,7 +76,7 @@ export default function EventosPage() {
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
-    return mockEvents.filter((e) => {
+    return allEvents.filter((e) => {
       if (city !== "all" && e.city !== city) return false;
       if (!inDatePreset(e.dateISO, datePreset)) return false;
       if (!inPriceBand(e.priceCents, priceBand)) return false;
@@ -92,17 +92,17 @@ export default function EventosPage() {
       }
       return true;
     });
-  }, [city, datePreset, priceBand, maisVantaOnly, selectedGenres, query]);
+  }, [allEvents, city, datePreset, priceBand, maisVantaOnly, selectedGenres, query]);
 
   const cityOptions = useMemo(() => {
-    const used = new Set(mockEvents.map((e) => e.city));
-    return cities.filter((c) => used.has(c.name));
-  }, []);
+    const used = new Set(allEvents.map((e) => e.city));
+    return [...used].filter(Boolean).sort().map((c) => ({ name: c, slug: c.toLowerCase().replace(/\s+/g, "-") }));
+  }, [allEvents]);
 
   const usedGenres = useMemo(() => {
-    const used = new Set(mockEvents.map((e) => e.genre).filter(Boolean));
+    const used = new Set(allEvents.map((e) => e.genre).filter(Boolean));
     return genres.filter((g) => used.has(g.slug));
-  }, []);
+  }, [allEvents]);
 
   const activeFilters =
     (city !== "all" ? 1 : 0) +

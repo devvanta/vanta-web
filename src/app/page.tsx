@@ -20,14 +20,16 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
-import { EventCard } from "@/components/site/event-card";
-import { mockEvents } from "@/lib/mock-events";
+import { EventCard, type EventCardData } from "@/components/site/event-card";
+import { getPublicEvents } from "@/lib/supabase/queries";
 
-export default function Home() {
+export default async function Home() {
+  const events = await getPublicEvents({ limit: 16 });
+
   return (
     <>
-      <Hero />
-      <EventsShowcase />
+      <Hero events={events} />
+      <EventsShowcase events={events} />
       <VantaIndica />
       <MaisVantaSection />
       <Notifications />
@@ -38,7 +40,7 @@ export default function Home() {
   );
 }
 
-function Hero() {
+function Hero({ events }: { events: EventCardData[] }) {
   return (
     <section className="relative overflow-hidden border-b border-white/5">
       <div className="absolute inset-0 pointer-events-none">
@@ -93,7 +95,7 @@ function Hero() {
           </div>
 
           <div className="relative">
-            <HeroMockup />
+            <HeroMockup events={events} />
           </div>
         </div>
       </Container>
@@ -101,7 +103,10 @@ function Hero() {
   );
 }
 
-function HeroMockup() {
+function HeroMockup({ events }: { events: EventCardData[] }) {
+  const preview = events.slice(0, 3);
+  const count = events.length;
+
   return (
     <div className="relative mx-auto w-full max-w-sm aspect-[9/16] rounded-[2.5rem] border border-white/10 bg-card overflow-hidden shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)]">
       <div
@@ -122,10 +127,18 @@ function HeroMockup() {
         </div>
         <p className="kicker text-[0.6rem] mb-3">novos eventos na sua cidade</p>
         <h3 className="text-2xl mb-5 leading-tight">
-          Sexta tem <span className="text-gold">4 eventos</span> pra você.
+          {count > 0 ? (
+            <>
+              Tem <span className="text-gold">{count} eventos</span> pra você.
+            </>
+          ) : (
+            <>
+              A noite <span className="text-gold">começa aqui</span>.
+            </>
+          )}
         </h3>
         <div className="space-y-3">
-          {mockEvents.slice(0, 3).map((e) => (
+          {preview.map((e) => (
             <div
               key={e.slug}
               className="flex items-center gap-3 p-3 rounded-xl bg-elevated/70 border border-white/5"
@@ -154,7 +167,7 @@ function HeroMockup() {
   );
 }
 
-function EventsShowcase() {
+function EventsShowcase({ events }: { events: EventCardData[] }) {
   return (
     <section className="py-20 md:py-28">
       <Container size="lg">
@@ -173,11 +186,19 @@ function EventsShowcase() {
             <ArrowRight size={14} />
           </a>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {mockEvents.map((e) => (
-            <EventCard key={e.slug} event={e} />
-          ))}
-        </div>
+        {events.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {events.map((e) => (
+              <EventCard key={e.slug} event={e} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-white/5 bg-card p-12 text-center">
+            <p className="text-text-muted">
+              Nenhum evento publicado ainda. Em breve!
+            </p>
+          </div>
+        )}
       </Container>
     </section>
   );
@@ -274,14 +295,6 @@ function VantaIndica() {
       action: "indicou",
       target: "Sunset Privilege",
       when: "há 2h",
-    },
-    {
-      who: "Rafa",
-      handle: "@rafabeats",
-      avatar: "linear-gradient(160deg, #28221a, #080604)",
-      action: "foi em",
-      target: "Noite do Samba",
-      when: "ontem",
     },
     {
       who: "7 amigos",
@@ -439,23 +452,23 @@ function MaisVantaSection() {
 function Notifications() {
   const pushes = [
     {
-      title: "Novo evento na Casa do Samba",
-      body: "Noite do Samba · sábado 22h. Confira.",
+      title: "Novo evento na sua cidade",
+      body: "Confira os eventos desta semana.",
       when: "agora",
     },
     {
       title: "Você recebeu uma cortesia",
-      body: "Cortesia para Sunset Privilege disponível na carteira.",
+      body: "Cortesia disponível na carteira.",
       when: "há 5min",
     },
     {
-      title: "Ana te transferiu um ingresso",
-      body: "Sunset Privilege · domingo. Já tá na sua carteira.",
+      title: "Ingresso transferido",
+      body: "Já tá na sua carteira.",
       when: "há 1h",
     },
     {
       title: "Seu evento é amanhã",
-      body: "Noite do Samba · 22h. Ingresso na carteira.",
+      body: "Ingresso na carteira, é só apresentar.",
       when: "há 3h",
     },
     {
@@ -614,7 +627,8 @@ function FinalCTA() {
       <Container size="sm">
         <div className="text-center">
           <h2 className="text-4xl md:text-6xl leading-tight mb-5">
-            Sua noite nunca mais <span className="text-gold">vai ser a mesma</span>.
+            Sua noite nunca mais{" "}
+            <span className="text-gold">vai ser a mesma</span>.
           </h2>
           <p className="text-text-secondary text-lg mb-8">
             Crie sua conta e aproveite tudo que a noite tem de melhor.

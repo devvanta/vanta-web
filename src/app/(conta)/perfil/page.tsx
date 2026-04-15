@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -20,8 +20,9 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
-const privacyFields = [
+const defaultPrivacyFields = [
   { key: "nome", label: "Nome", public: true },
   { key: "instagram", label: "Instagram", public: true },
   { key: "cidade", label: "Cidade", public: true },
@@ -30,36 +31,70 @@ const privacyFields = [
   { key: "email", label: "E-mail", public: false },
 ];
 
-const stats = [
-  { label: "Eventos", value: "18" },
-  { label: "Amigos", value: "47" },
-  { label: "Cortesias", value: "6" },
-  { label: "Indicações", value: "12" },
-];
-
-const indications = [
-  {
-    who: "Ana Souza",
-    venue: "Sunset Privilege",
-    when: "há 2 dias",
-    accepted: true,
-  },
-  {
-    who: "Rafa Beats",
-    venue: "Noite do Samba",
-    when: "há 5 dias",
-    accepted: true,
-  },
-  {
-    who: "Matheus Lopes",
-    venue: "Techno Underground",
-    when: "há 1 semana",
-    accepted: false,
-  },
-];
+type Profile = {
+  nome: string | null;
+  instagram: string | null;
+  cidade: string | null;
+  avatar_url: string | null;
+  created_at: string | null;
+  privacy_settings: Record<string, boolean> | null;
+};
 
 export default function PerfilPage() {
-  const [fields, setFields] = useState(privacyFields);
+  const [fields, setFields] = useState(defaultPrivacyFields);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [stats, setStats] = useState([
+    { label: "Eventos", value: "—" },
+    { label: "Amigos", value: "—" },
+    { label: "Cortesias", value: "—" },
+    { label: "Indicações", value: "—" },
+  ]);
+
+  const indications = [
+    { who: "Ana Souza", venue: "Sunset Privilege", when: "há 2 dias", accepted: true },
+    { who: "Matheus Lopes", venue: "Techno Underground", when: "há 1 semana", accepted: false },
+  ];
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("nome, instagram, cidade, avatar_url, created_at, privacy_settings")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (prof) {
+        setProfile(prof as Profile);
+        const ps = (prof.privacy_settings || {}) as Record<string, boolean>;
+        setFields(defaultPrivacyFields.map(f => ({
+          ...f,
+          public: ps[f.key] !== undefined ? ps[f.key] : f.public,
+        })));
+      }
+
+      // Fetch stats
+      const [ticketsRes, friendsRes] = await Promise.all([
+        supabase.from("ingressos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("friendships").select("id", { count: "exact", head: true })
+          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+          .eq("status", "accepted"),
+      ]);
+
+      setStats([
+        { label: "Eventos", value: String(ticketsRes.count ?? 0) },
+        { label: "Amigos", value: String(friendsRes.count ?? 0) },
+        { label: "Cortesias", value: "—" },
+        { label: "Indicações", value: "—" },
+      ]);
+    }
+
+    loadProfile();
+  }, []);
 
   function togglePrivacy(key: string) {
     setFields((prev) =>
@@ -80,13 +115,17 @@ export default function PerfilPage() {
         />
         <div className="p-6 -mt-12 relative">
           <div className="flex items-end justify-between gap-4 mb-6">
-            <div
-              className="h-24 w-24 rounded-2xl border-4 border-card"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(255,211,0,0.4), #080604)",
-              }}
-            />
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="" className="h-24 w-24 rounded-2xl border-4 border-card object-cover" />
+            ) : (
+              <div
+                className="h-24 w-24 rounded-2xl border-4 border-card"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255,211,0,0.4), #080604)",
+                }}
+              />
+            )}
             <div className="flex gap-2">
               <button className="h-9 px-4 rounded-xl border border-white/10 bg-elevated text-sm text-text-secondary hover-real:text-text-primary hover-real:border-white/20 transition-colors duration-200 cursor-pointer flex items-center gap-2">
                 <Edit2 size={12} />
@@ -100,25 +139,31 @@ export default function PerfilPage() {
 
           <div className="mb-4">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl md:text-3xl leading-tight">Você</h1>
+              <h1 className="text-2xl md:text-3xl leading-tight">{profile?.nome || "Você"}</h1>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6rem] font-semibold uppercase tracking-[0.18em] bg-gold text-black">
                 <Crown size={10} strokeWidth={2.5} />
                 Mais Vanta
               </span>
             </div>
             <div className="flex items-center gap-3 text-sm text-text-muted flex-wrap">
-              <span className="flex items-center gap-1.5">
-                <AtSign size={12} />
-                @seunome
-              </span>
-              <span className="flex items-center gap-1.5">
-                <MapPin size={12} />
-                Rio de Janeiro
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Calendar size={12} />
-                No VANTA desde mar/2026
-              </span>
+              {profile?.instagram && (
+                <span className="flex items-center gap-1.5">
+                  <AtSign size={12} />
+                  @{profile.instagram}
+                </span>
+              )}
+              {profile?.cidade && (
+                <span className="flex items-center gap-1.5">
+                  <MapPin size={12} />
+                  {profile.cidade}
+                </span>
+              )}
+              {profile?.created_at && (
+                <span className="flex items-center gap-1.5">
+                  <Calendar size={12} />
+                  No VANTA desde {new Date(profile.created_at).toLocaleDateString("pt-BR", { month: "short", year: "numeric" })}
+                </span>
+              )}
             </div>
           </div>
 

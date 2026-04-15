@@ -16,47 +16,9 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/site/event-card";
-import { mockEvents } from "@/lib/mock-events";
+import { getEventBySlug, getPublicEvents } from "@/lib/supabase/queries";
 import { genreBySlug } from "@/lib/genres";
 import { cn } from "@/lib/utils";
-
-type Variation = {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  available: number;
-  total: number;
-  maisVanta?: boolean;
-};
-
-const variations: Variation[] = [
-  {
-    id: "1lote-pista",
-    name: "1º Lote · Pista",
-    description: "Entrada até 23h. Depois vira bilheteria.",
-    price: 40,
-    available: 23,
-    total: 100,
-  },
-  {
-    id: "1lote-vip",
-    name: "1º Lote · VIP",
-    description: "Área elevada, open bar até 1h, acesso ao rooftop.",
-    price: 120,
-    available: 12,
-    total: 50,
-    maisVanta: true,
-  },
-  {
-    id: "mesa",
-    name: "Mesa (4 pessoas)",
-    description: "Mesa reservada + 1 ingresso por pessoa + welcome drink.",
-    price: 480,
-    available: 4,
-    total: 10,
-  },
-];
 
 const faq = [
   {
@@ -81,39 +43,33 @@ const faq = [
   },
 ];
 
-function formatPrice(cents: number) {
-  return cents === 0
-    ? "Grátis"
-    : `R$ ${cents.toFixed(2).replace(".", ",")}`;
-}
-
 export default async function EventPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const event = mockEvents.find((e) => e.slug === slug);
+  const event = await getEventBySlug(slug);
   if (!event) notFound();
 
   const genre = event.genre ? genreBySlug.get(event.genre) : null;
 
-  const related = mockEvents
+  const allEvents = await getPublicEvents({ limit: 20 });
+  const related = allEvents
     .filter(
       (e) =>
         e.slug !== event.slug &&
-        (e.city === event.city || e.genre === event.genre),
+        (e.city === event.city || e.genre === event.genre)
     )
     .slice(0, 3);
 
-  const lineUp =
-    event.lineUp && event.lineUp.length > 0
-      ? event.lineUp
-      : [
-          { name: "Abertura", role: "Residente da casa", time: "22h – 0h" },
-          { name: "Headliner", role: event.genre ?? "Convidado", time: "0h – 2h" },
-          { name: "Encerramento", role: "Residente da casa", time: "2h – 4h" },
-        ];
+  const lineUp = event.lineUp && event.lineUp.length > 0
+    ? event.lineUp
+    : [
+        { name: "Abertura", role: "Residente da casa", time: "22h – 0h" },
+        { name: "Headliner", role: event.genre ?? "Convidado", time: "0h – 2h" },
+        { name: "Encerramento", role: "Residente da casa", time: "2h – 4h" },
+      ];
 
   const description =
     event.description ??
@@ -166,7 +122,7 @@ export default async function EventPage({
                   <span
                     className={cn(
                       "px-3 py-1 rounded-full text-[0.6rem] font-semibold uppercase tracking-[0.18em]",
-                      genre.badgeClass,
+                      genre.badgeClass
                     )}
                   >
                     {genre.label}
@@ -271,7 +227,7 @@ export default async function EventPage({
               <span className="kicker mb-3 inline-block">localização</span>
               <h2 className="text-2xl md:text-3xl mb-5">Como chegar.</h2>
               <div className="rounded-2xl overflow-hidden border border-white/5 bg-card">
-                {event.lat !== undefined && event.lng !== undefined ? (
+                {event.lat != null && event.lng != null ? (
                   <div className="relative aspect-[16/9]">
                     <iframe
                       title={`Mapa de ${event.venue}`}
@@ -293,7 +249,7 @@ export default async function EventPage({
                     <p className="text-sm font-semibold mb-1">{event.venue}</p>
                     <p className="text-xs text-text-muted">{address}</p>
                   </div>
-                  {event.lat !== undefined && event.lng !== undefined && (
+                  {event.lat != null && event.lng != null && (
                     <Link
                       href={`https://www.google.com/maps/search/?api=1&query=${event.lat},${event.lng}`}
                       target="_blank"
@@ -345,7 +301,7 @@ export default async function EventPage({
                     key={item.q}
                     className={cn(
                       "group",
-                      i > 0 && "border-t border-white/5",
+                      i > 0 && "border-t border-white/5"
                     )}
                   >
                     <summary className="flex items-center justify-between gap-4 px-5 py-4 cursor-pointer hover-real:bg-elevated/50 transition-colors duration-200 list-none">
@@ -369,21 +325,23 @@ export default async function EventPage({
               <div className="rounded-2xl bg-card border border-white/5 p-6">
                 <div className="flex items-center justify-between mb-5">
                   <span className="kicker">ingressos</span>
-                  <span className="text-xs text-text-muted">
-                    {variations.reduce((s, v) => s + v.available, 0)}{" "}
-                    disponíveis
-                  </span>
                 </div>
 
-                <div className="space-y-3">
-                  {variations.map((v) => (
-                    <VariationCard key={v.id} v={v} />
-                  ))}
+                <div className="text-center py-8">
+                  <p className="text-sm text-text-muted mb-2">
+                    A partir de
+                  </p>
+                  <p className="text-3xl font-semibold text-gold mb-4">
+                    {event.priceLabel}
+                  </p>
+                  <p className="text-xs text-text-muted">
+                    Compra disponível pelo app VANTA
+                  </p>
                 </div>
 
                 <div className="mt-6 pt-6 border-t border-white/5">
                   <Button className="w-full" size="lg">
-                    Continuar
+                    Baixar o app
                   </Button>
                   <p className="text-xs text-text-muted text-center mt-3">
                     Pagamento seguro. Ingresso entra direto na sua carteira.
@@ -460,56 +418,6 @@ function Info({
     <div className="flex items-center gap-2">
       <Icon size={14} className="text-gold shrink-0" />
       <span>{label}</span>
-    </div>
-  );
-}
-
-function VariationCard({ v }: { v: Variation }) {
-  const soldPct = ((v.total - v.available) / v.total) * 100;
-  const lowStock = v.available <= 5;
-  return (
-    <div
-      className={cn(
-        "rounded-xl border p-4 transition-colors duration-200",
-        v.maisVanta
-          ? "border-gold/30 bg-gold/[0.03]"
-          : "border-white/5 bg-elevated/40 hover-real:border-white/15",
-      )}
-    >
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <p className="text-sm font-semibold">{v.name}</p>
-            {v.maisVanta && (
-              <span className="text-[0.6rem] uppercase tracking-[0.18em] bg-gold text-black px-2 py-0.5 rounded-full font-semibold">
-                +10%
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-text-muted leading-relaxed">
-            {v.description}
-          </p>
-        </div>
-        <span className="text-sm font-semibold text-gold whitespace-nowrap">
-          {formatPrice(v.price)}
-        </span>
-      </div>
-      <div className="flex items-center justify-between mt-3">
-        <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden mr-4">
-          <div
-            className={cn("h-full", lowStock ? "bg-warning" : "bg-gold/80")}
-            style={{ width: `${soldPct}%` }}
-          />
-        </div>
-        <span
-          className={cn(
-            "text-[0.65rem] kicker",
-            lowStock ? "text-warning" : "text-text-muted",
-          )}
-        >
-          {lowStock ? `últimos ${v.available}` : `${v.available} restantes`}
-        </span>
-      </div>
     </div>
   );
 }

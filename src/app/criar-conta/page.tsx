@@ -7,15 +7,39 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/site/logo";
 import { OAuthButton } from "@/components/site/oauth-button";
+import { createClient } from "@/lib/supabase/client";
 
 export default function CriarContaPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (name.trim() && email.trim()) setSent(true);
+    if (!name.trim() || !email.trim()) return;
+
+    setLoading(true);
+    setError(null);
+
+    const supabase = createClient();
+    const { error: signUpError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { nome: name.trim() },
+      },
+    });
+
+    setLoading(false);
+
+    if (signUpError) {
+      setError("Não foi possível criar a conta. Tente novamente.");
+      return;
+    }
+
+    setSent(true);
   }
 
   return (
@@ -85,9 +109,10 @@ export default function CriarContaPage() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full" size="lg">
-                Criar conta
-                <ArrowRight size={16} />
+              {error && <p className="text-xs text-error">{error}</p>}
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? "Criando..." : "Criar conta"}
+                {!loading && <ArrowRight size={16} />}
               </Button>
             </form>
 

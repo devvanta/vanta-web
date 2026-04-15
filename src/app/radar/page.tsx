@@ -11,8 +11,7 @@ import {
   Radio,
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { mockEvents } from "@/lib/mock-events";
-import { cities } from "@/lib/cities";
+import { useEvents } from "@/lib/supabase/use-events";
 import { genres, genreBySlug } from "@/lib/genres";
 import { cn } from "@/lib/utils";
 
@@ -32,14 +31,15 @@ const RadarMap = dynamic(
 );
 
 export default function RadarPage() {
+  const { events: allEvents } = useEvents();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [city, setCity] = useState<string>("all");
   const [genreSlug, setGenreSlug] = useState<string>("all");
   const [maisVantaOnly, setMaisVantaOnly] = useState(false);
 
   const withCoords = useMemo(
-    () => mockEvents.filter((e) => e.lat !== undefined && e.lng !== undefined),
-    [],
+    () => allEvents.filter((e) => e.lat !== undefined && e.lng !== undefined),
+    [allEvents],
   );
 
   const filtered = useMemo(() => {
@@ -52,8 +52,8 @@ export default function RadarPage() {
   }, [withCoords, city, genreSlug, maisVantaOnly]);
 
   const availableCities = useMemo(() => {
-    const used = new Set(withCoords.map((e) => e.city));
-    return cities.filter((c) => used.has(c.name));
+    const used = [...new Set(withCoords.map((e) => e.city).filter(Boolean))];
+    return used.sort().map((c) => ({ name: c, slug: c.toLowerCase().replace(/\s+/g, "-") }));
   }, [withCoords]);
 
   const availableGenres = useMemo(() => {

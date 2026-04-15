@@ -27,6 +27,7 @@ type Props = {
   size?: Size;
   className?: string;
   children: React.ReactNode;
+  disabled?: boolean;
 } & (
   | { href: string; onClick?: never; type?: never }
   | { href?: never; onClick?: () => void; type?: "button" | "submit" }
@@ -40,6 +41,7 @@ export function Button({
   href,
   onClick,
   type,
+  disabled,
 }: Props) {
   const classes = cn(base, variants[variant], sizes[size], className);
   if (href) {
@@ -50,7 +52,7 @@ export function Button({
     );
   }
   return (
-    <button type={type ?? "button"} onClick={onClick} className={classes}>
+    <button type={type ?? "button"} onClick={onClick} disabled={disabled} className={classes}>
       {children}
     </button>
   );

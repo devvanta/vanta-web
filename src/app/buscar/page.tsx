@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { EventCard } from "@/components/site/event-card";
-import { mockEvents } from "@/lib/mock-events";
+import { useEvents } from "@/lib/supabase/use-events";
 import { cities } from "@/lib/cities";
-import { genres, genreBySlug } from "@/lib/genres";
+import { genres } from "@/lib/genres";
 import { cn } from "@/lib/utils";
 
 const trending = [
@@ -39,12 +39,13 @@ type Suggestion =
   | { kind: "genre"; label: string; meta: string; href: string };
 
 export default function BuscarPage() {
+  const { events: allEvents } = useEvents();
   const [q, setQ] = useState("");
 
   const filteredEvents = useMemo(() => {
     if (!q.trim()) return [];
     const needle = q.trim().toLowerCase();
-    return mockEvents.filter((e) => {
+    return allEvents.filter((e) => {
       const hay =
         `${e.name} ${e.venue} ${e.city} ${e.genre ?? ""}`.toLowerCase();
       return hay.includes(needle);
@@ -58,11 +59,11 @@ export default function BuscarPage() {
 
     // Casas
     const venues = new Set<string>();
-    mockEvents.forEach((e) => {
+    allEvents.forEach((e) => {
       if (e.venue.toLowerCase().includes(needle)) venues.add(e.venue);
     });
     venues.forEach((v) => {
-      const ev = mockEvents.find((e) => e.venue === v);
+      const ev = allEvents.find((e) => e.venue === v);
       out.push({
         kind: "venue",
         label: v,
