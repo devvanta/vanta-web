@@ -14,6 +14,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/admin/:path*",
+        destination: "https://app.maisvanta.com/admin/:path*",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
