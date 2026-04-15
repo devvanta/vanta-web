@@ -462,11 +462,11 @@ export default async function EventPage({
 
                 <div className="mt-6 pt-6 border-t border-white/5">
                   {isLoggedIn ? (
-                    <Button className="w-full" size="lg">
+                    <Button href={`/checkout/${slug}`} className="w-full" size="lg">
                       Garantir ingresso
                     </Button>
                   ) : (
-                    <Button href={`/entrar?next=/evento/${slug}`} className="w-full" size="lg">
+                    <Button href={`/entrar?next=/checkout/${slug}`} className="w-full" size="lg">
                       Entrar pra comprar
                     </Button>
                   )}
