@@ -29,6 +29,7 @@ type RealTicket = {
   emitidoEm: string;
   usadoEm: string | null;
   codigoQR: string | null;
+  origem: string | null;
 };
 
 export default function CarteiraPage() {
@@ -49,7 +50,7 @@ export default function CarteiraPage() {
         .from("tickets_caixa")
         .select(
           `
-          id, evento_id, variacao_id, valor, status, criado_em, usado_em, codigo_qr,
+          id, evento_id, variacao_id, valor, status, criado_em, usado_em, codigo_qr, origem,
           eventos_admin ( nome, data_inicio, data_fim, local, foto ),
           variacoes_ingresso ( area, area_custom, genero )
         `
@@ -100,6 +101,7 @@ export default function CarteiraPage() {
             emitidoEm: row.criado_em,
             usadoEm: row.usado_em ?? null,
             codigoQR: (row.codigo_qr as string) ?? null,
+            origem: (row.origem as string) ?? null,
           };
         })
       );
@@ -109,10 +111,12 @@ export default function CarteiraPage() {
     loadTickets();
   }, []);
 
-  const active = tickets.filter(
+  const cortesias = tickets.filter((t) => t.origem === "CORTESIA");
+  const nonCortesia = tickets.filter((t) => t.origem !== "CORTESIA");
+  const active = nonCortesia.filter(
     (t) => t.status === "DISPONIVEL" || t.status === "ATIVO"
   );
-  const history = tickets.filter(
+  const history = nonCortesia.filter(
     (t) => t.status === "USADO" || t.status === "TRANSFERIDO" || t.status === "CANCELADO"
   );
 
@@ -154,7 +158,7 @@ export default function CarteiraPage() {
           >
             {t === "ativos" && `Ativos · ${active.length}`}
             {t === "historico" && `Histórico · ${history.length}`}
-            {t === "cortesias" && "Cortesias"}
+            {t === "cortesias" && `Cortesias · ${cortesias.length}`}
           </button>
         ))}
       </div>
@@ -245,13 +249,21 @@ export default function CarteiraPage() {
 
           {/* Cortesias */}
           {tab === "cortesias" && (
-            <div className="rounded-2xl border border-white/5 bg-card p-12 text-center">
-              <Gift size={24} className="text-gold mx-auto mb-4" />
-              <h3 className="text-lg mb-2">Cortesias</h3>
-              <p className="text-text-muted text-sm">
-                Cortesias recebidas de casas parceiras e do Mais Vanta aparecem aqui.
-              </p>
-            </div>
+            cortesias.length === 0 ? (
+              <div className="rounded-2xl border border-white/5 bg-card p-12 text-center">
+                <Gift size={24} className="text-gold mx-auto mb-4" />
+                <h3 className="text-lg mb-2">Nenhuma cortesia</h3>
+                <p className="text-text-muted text-sm">
+                  Cortesias recebidas de casas parceiras e do Mais Vanta aparecem aqui.
+                </p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-5">
+                {cortesias.map((t) => (
+                  <TicketCard key={t.id} t={t} formatDate={formatDate} />
+                ))}
+              </div>
+            )
           )}
         </>
       )}

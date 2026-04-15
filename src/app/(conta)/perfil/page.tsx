@@ -112,10 +112,9 @@ export default function PerfilPage() {
       privacyObj[f.key] = f.public;
     }
 
-    await supabase
-      .from("profiles")
-      .update({ privacidade: privacyObj })
-      .eq("id", user.id);
+    await supabase.rpc("user_profile_update", {
+      p_fields: { privacidade: privacyObj },
+    });
   }
 
   return (
@@ -179,7 +178,7 @@ export default function PerfilPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-3 pt-5 border-t border-white/5">
+          <div className="grid grid-cols-3 gap-3 pt-5 border-t border-white/5">
             {stats.map((s) => (
               <div key={s.label}>
                 <p className="text-2xl leading-none mb-1">{s.value}</p>

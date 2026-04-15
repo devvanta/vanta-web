@@ -265,11 +265,25 @@ export default function CheckoutPage() {
     });
   }, [cupomCodigo, evento]);
 
-  // Save CPF
+  // Save CPF with checkdigit validation
   const saveCpf = useCallback(async () => {
     const digits = cpf.replace(/\D/g, "");
     if (digits.length !== 11) return;
+    // Reject all-same-digit CPFs
+    if (/^(\d)\1{10}$/.test(digits)) { setError("CPF inválido."); return; }
+    // Modulo 11 check
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += Number(digits[i]) * (10 - i);
+    let d1 = 11 - (sum % 11);
+    if (d1 >= 10) d1 = 0;
+    if (Number(digits[9]) !== d1) { setError("CPF inválido."); return; }
+    sum = 0;
+    for (let i = 0; i < 10; i++) sum += Number(digits[i]) * (11 - i);
+    let d2 = 11 - (sum % 11);
+    if (d2 >= 10) d2 = 0;
+    if (Number(digits[10]) !== d2) { setError("CPF inválido."); return; }
 
+    setError(null);
     const supabase = createClient();
     await supabase.rpc("user_profile_update", {
       p_fields: { cpf: digits },
