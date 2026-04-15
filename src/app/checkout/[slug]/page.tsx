@@ -332,11 +332,21 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Paid checkout — call edge function
-    const { data, error: fnError } = await supabase.functions.invoke(
-      "create-ticket-checkout",
+    // Paid checkout — call edge function via fetch (not invoke) to get error body
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    const fnRes = await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-ticket-checkout`,
       {
-        body: {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+          apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        },
+        body: JSON.stringify({
           evento_id: evento.id,
           lote_id: lote.id,
           itens,
@@ -344,16 +354,17 @@ export default function CheckoutPage() {
           mesa_id: null,
           acompanhantes: null,
           ref_code: null,
-        },
+        }),
       }
     );
 
-    if (fnError || !data || data?.error) {
+    const fnData = await fnRes.json().catch(() => null);
+
+    if (!fnRes.ok || !fnData || fnData.error) {
       const msg =
-        data?.error ||
-        fnError?.message ||
-        "Erro ao criar checkout. Tente novamente.";
-      console.error("[checkout]", fnError, data);
+        fnData?.error ||
+        `Erro ${fnRes.status}: ${fnRes.statusText}`;
+      console.error("[checkout]", fnRes.status, fnData);
       setError(msg);
       setSubmitting(false);
       submitLock.current = false;
@@ -361,8 +372,8 @@ export default function CheckoutPage() {
     }
 
     // Redirect to Stripe
-    if (data?.url) {
-      window.location.href = data.url;
+    if (fnData.url) {
+      window.location.href = fnData.url;
     }
   }, [
     evento,
