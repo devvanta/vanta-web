@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -33,20 +33,23 @@ function SucessoContent() {
   const [eventName, setEventName] = useState<string | null>(null);
   const [ticketCount, setTicketCount] = useState(0);
   const [attempts, setAttempts] = useState(0);
+  const attemptsRef = useRef(0);
 
   const poll = useCallback(async () => {
     if (!pedidoId) return;
 
     const supabase = createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("pedidos_checkout")
       .select("status, evento_id, dados_compra")
       .eq("id", pedidoId)
       .maybeSingle();
 
-    if (!data) return;
+    if (error || !data) {
+      console.warn("[checkout/sucesso] poll error:", error?.message || "no data");
+    }
 
-    if (data.status === "PAGO") {
+    if (data?.status === "PAGO") {
       // Fetch event name
       if (data.evento_id) {
         const { data: ev } = await supabase
@@ -71,19 +74,17 @@ function SucessoContent() {
       return;
     }
 
-    if (data.status === "CANCELADO" || data.status === "EXPIRADO") {
+    if (data?.status === "CANCELADO" || data?.status === "EXPIRADO") {
       setStatus("failed");
       return;
     }
 
-    // Still pending
-    setAttempts((n) => {
-      if (n >= 30) {
-        setStatus("timeout");
-        return n;
-      }
-      return n + 1;
-    });
+    // Still pending — increment attempts
+    attemptsRef.current += 1;
+    setAttempts(attemptsRef.current);
+    if (attemptsRef.current >= 30) {
+      setStatus("timeout");
+    }
   }, [pedidoId]);
 
   useEffect(() => {

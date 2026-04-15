@@ -96,7 +96,10 @@ export default function CheckoutPage() {
   // Cancelled return
   const [cancelled, setCancelled] = useState(false);
 
+  // Reset lock on mount (handles bfcache restore after Stripe redirect)
   useEffect(() => {
+    submitLock.current = false;
+    setSubmitting(false);
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       if (params.get("cancelado") === "true") setCancelled(true);
@@ -402,6 +405,7 @@ export default function CheckoutPage() {
     userId,
     userEmail,
     cupomAplicado,
+    slug,
   ]);
 
   if (loading) {
