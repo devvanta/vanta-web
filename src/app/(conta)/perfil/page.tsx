@@ -156,10 +156,6 @@ export default function PerfilPage() {
           <div className="mb-4">
             <div className="flex items-center gap-3 mb-2">
               <h1 className="text-2xl md:text-3xl leading-tight">{profile?.nome || "Você"}</h1>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[0.6rem] font-semibold uppercase tracking-[0.18em] bg-gold text-black">
-                <Crown size={10} strokeWidth={2.5} />
-                Mais Vanta
-              </span>
             </div>
             <div className="flex items-center gap-3 text-sm text-text-muted flex-wrap">
               {profile?.instagram && (

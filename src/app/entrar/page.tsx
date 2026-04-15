@@ -60,8 +60,9 @@ function EntrarContent() {
       return;
     }
 
-    // Redirect to home on success
-    window.location.href = "/";
+    // Redirect to ?next param or home
+    const next = searchParams.get("next");
+    window.location.href = next && next.startsWith("/") ? next : "/";
   }
 
   return (

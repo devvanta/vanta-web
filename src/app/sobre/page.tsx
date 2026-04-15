@@ -230,8 +230,8 @@ export default function SobrePage() {
             <ContactCard
               icon={MessageCircle}
               label="Suporte"
-              value="Chat no app"
-              href="/suporte"
+              value="contato@maisvanta.com"
+              href="mailto:contato@maisvanta.com"
             />
           </div>
 

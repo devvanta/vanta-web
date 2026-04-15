@@ -72,7 +72,7 @@ export default function BuscarPage() {
         `${e.name} ${e.venue} ${e.city} ${e.genre ?? ""}`.toLowerCase();
       return hay.includes(needle);
     });
-  }, [q]);
+  }, [q, allEvents]);
 
   const suggestions: Suggestion[] = useMemo(() => {
     if (!q.trim()) return [];
@@ -119,7 +119,7 @@ export default function BuscarPage() {
     });
 
     return out.slice(0, 6);
-  }, [q]);
+  }, [q, allEvents, cities]);
 
   return (
     <Container size="lg" className="py-12 md:py-16">
