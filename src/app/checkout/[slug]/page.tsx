@@ -348,8 +348,13 @@ export default function CheckoutPage() {
       }
     );
 
-    if (fnError || data?.error) {
-      setError(data?.error || "Erro ao criar checkout. Tente novamente.");
+    if (fnError || !data || data?.error) {
+      const msg =
+        data?.error ||
+        fnError?.message ||
+        "Erro ao criar checkout. Tente novamente.";
+      console.error("[checkout]", fnError, data);
+      setError(msg);
       setSubmitting(false);
       submitLock.current = false;
       return;
