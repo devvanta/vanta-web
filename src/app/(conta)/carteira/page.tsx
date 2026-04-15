@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowRight,
   Calendar,
   Check,
   Crown,
@@ -14,105 +13,118 @@ import {
   Ticket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 type Tab = "ativos" | "historico" | "cortesias";
 
-type ActiveTicket = {
+type RealTicket = {
   id: string;
-  event: string;
-  venue: string;
-  city: string;
-  date: string;
-  variation: string;
-  code: string;
-  maisVanta?: boolean;
-  gradient: string;
+  eventoNome: string;
+  eventoLocal: string;
+  eventoFoto: string | null;
+  eventoDataInicio: string;
+  variacaoLabel: string;
+  valor: number;
+  status: string;
+  emitidoEm: string;
+  usadoEm: string | null;
+  codigoQR: string | null;
 };
-
-const active: ActiveTicket[] = [
-  {
-    id: "TCK-0042",
-    event: "Noite do Samba",
-    venue: "Casa do Samba",
-    city: "Rio de Janeiro",
-    date: "Sáb · 19 abr · 22h",
-    variation: "1º Lote · Pista",
-    code: "A1B2C3",
-    maisVanta: true,
-    gradient:
-      "radial-gradient(circle at 30% 20%, rgba(255,211,0,0.32), transparent 55%), linear-gradient(140deg, #2a1d0a, #080604)",
-  },
-  {
-    id: "TCK-0043",
-    event: "Sunset Privilege",
-    venue: "Rooftop Ipanema",
-    city: "Rio de Janeiro",
-    date: "Dom · 20 abr · 17h",
-    variation: "1º Lote · VIP",
-    code: "D4E5F6",
-    gradient:
-      "radial-gradient(circle at 70% 30%, rgba(255,211,0,0.22), transparent 60%), linear-gradient(200deg, #201510, #080604)",
-  },
-  {
-    id: "TCK-0044",
-    event: "Techno Underground",
-    venue: "Comuna",
-    city: "Rio de Janeiro",
-    date: "Qui · 24 abr · 20h",
-    variation: "Cortesia",
-    code: "G7H8I9",
-    maisVanta: true,
-    gradient:
-      "radial-gradient(circle at 20% 70%, rgba(255,211,0,0.16), transparent 60%), linear-gradient(220deg, #1f1810, #080604)",
-  },
-];
-
-const history = [
-  {
-    event: "Sambinha da Lapa",
-    venue: "Armazém 1",
-    date: "12 abr 2026",
-    checkedIn: true,
-  },
-  {
-    event: "Funk da Quebrada",
-    venue: "Galpão Tijuca",
-    date: "5 abr 2026",
-    checkedIn: true,
-  },
-  {
-    event: "Jazz Sessions",
-    venue: "Mistura Fina",
-    date: "28 mar 2026",
-    checkedIn: true,
-  },
-  {
-    event: "House Nights",
-    venue: "Fundição",
-    date: "15 mar 2026",
-    checkedIn: false,
-  },
-];
-
-const cortesias = [
-  {
-    event: "Baile da Casa",
-    venue: "Casa do Samba",
-    qty: 1,
-    expires: "até 30 abr",
-    from: "Casa parceira",
-  },
-  {
-    event: "Sunset exclusivo",
-    venue: "Rooftop Ipanema",
-    qty: 2,
-    expires: "até 15 mai",
-    from: "Mais Vanta",
-  },
-];
 
 export default function CarteiraPage() {
   const [tab, setTab] = useState<Tab>("ativos");
+  const [tickets, setTickets] = useState<RealTicket[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function loadTickets() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("tickets_caixa")
+        .select(
+          `
+          id, evento_id, variacao_id, valor, status, criado_em, usado_em, codigo_qr,
+          eventos_admin ( nome, data_inicio, data_fim, local, foto ),
+          variacoes_ingresso ( area, area_custom, genero )
+        `
+        )
+        .eq("owner_id", user.id)
+        .order("criado_em", { ascending: false })
+        .limit(200);
+
+      if (error || !data) {
+        setLoading(false);
+        return;
+      }
+
+      setTickets(
+        data.map((row) => {
+          const ev = row.eventos_admin as {
+            nome?: string;
+            data_inicio?: string;
+            local?: string;
+            foto?: string;
+          } | null;
+          const vi = row.variacoes_ingresso as {
+            area?: string;
+            area_custom?: string;
+            genero?: string;
+          } | null;
+          const area = vi
+            ? vi.area === "OUTRO"
+              ? (vi.area_custom ?? "Outro")
+              : (vi.area ?? "")
+            : "";
+          const genero = vi
+            ? vi.genero === "MASCULINO"
+              ? "Masc."
+              : vi.genero === "FEMININO"
+                ? "Fem."
+                : ""
+            : "";
+          return {
+            id: row.id,
+            eventoNome: ev?.nome ?? "Evento",
+            eventoLocal: ev?.local ?? "",
+            eventoFoto: ev?.foto ?? null,
+            eventoDataInicio: ev?.data_inicio ?? row.criado_em,
+            variacaoLabel: [area, genero].filter(Boolean).join(" · "),
+            valor: Number(row.valor ?? 0),
+            status: row.status as string,
+            emitidoEm: row.criado_em,
+            usadoEm: row.usado_em ?? null,
+            codigoQR: (row.codigo_qr as string) ?? null,
+          };
+        })
+      );
+      setLoading(false);
+    }
+
+    loadTickets();
+  }, []);
+
+  const active = tickets.filter(
+    (t) => t.status === "DISPONIVEL" || t.status === "ATIVO"
+  );
+  const history = tickets.filter(
+    (t) => t.status === "USADO" || t.status === "TRANSFERIDO" || t.status === "CANCELADO"
+  );
+
+  function formatDate(iso: string) {
+    const d = new Date(iso);
+    const dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const meses = [
+      "jan", "fev", "mar", "abr", "mai", "jun",
+      "jul", "ago", "set", "out", "nov", "dez",
+    ];
+    return `${dias[d.getDay()]} · ${d.getDate()} ${meses[d.getMonth()]} · ${d.getHours()}h`;
+  }
 
   return (
     <div className="space-y-6">
@@ -137,95 +149,114 @@ export default function CarteiraPage() {
               "px-4 py-3 text-sm font-medium cursor-pointer border-b-2 -mb-[2px] transition-colors duration-200",
               tab === t
                 ? "text-gold border-gold"
-                : "text-text-muted border-transparent hover-real:text-text-primary",
+                : "text-text-muted border-transparent hover-real:text-text-primary"
             )}
           >
             {t === "ativos" && `Ativos · ${active.length}`}
             {t === "historico" && `Histórico · ${history.length}`}
-            {t === "cortesias" && `Cortesias · ${cortesias.length}`}
+            {t === "cortesias" && "Cortesias"}
           </button>
         ))}
       </div>
 
-      {/* Tab content */}
-      {tab === "ativos" && (
-        <div className="grid md:grid-cols-2 gap-5">
-          {active.map((t) => (
-            <TicketCard key={t.id} t={t} />
-          ))}
+      {loading ? (
+        <div className="text-center py-12 text-text-muted text-sm">
+          Carregando ingressos...
         </div>
-      )}
-
-      {tab === "historico" && (
-        <ul className="rounded-2xl border border-white/5 bg-card overflow-hidden">
-          {history.map((h, i) => (
-            <li
-              key={`${h.event}-${i}`}
-              className={cn(
-                "p-5 flex items-center gap-4",
-                i > 0 && "border-t border-white/5",
-              )}
-            >
-              <div
-                className="h-10 w-10 rounded-xl shrink-0"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(255,211,0,0.15), #080604)",
-                }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate">{h.event}</p>
-                <p className="text-xs text-text-muted mt-0.5">
-                  {h.venue} · {h.date}
-                </p>
-              </div>
-              {h.checkedIn ? (
-                <span className="inline-flex items-center gap-1 text-xs text-success">
-                  <Check size={12} />
-                  Check-in
-                </span>
-              ) : (
-                <span className="text-xs text-text-muted">No-show</span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {tab === "cortesias" && (
-        <div className="space-y-3">
-          {cortesias.map((c) => (
-            <div
-              key={c.event}
-              className="rounded-2xl border border-gold/20 bg-gradient-to-br from-card to-midnight p-5 flex items-start gap-4"
-            >
-              <div className="h-11 w-11 rounded-xl bg-gold/15 border border-gold/40 flex items-center justify-center text-gold shrink-0">
-                <Gift size={16} strokeWidth={2.5} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
-                  <p className="text-sm font-semibold">{c.event}</p>
-                  <span className="kicker text-[0.6rem]">
-                    {c.qty} {c.qty === 1 ? "cortesia" : "cortesias"}
-                  </span>
-                </div>
-                <p className="text-xs text-text-muted mb-3">
-                  {c.venue} · Vale {c.expires} · {c.from}
+      ) : (
+        <>
+          {/* Ativos */}
+          {tab === "ativos" && (
+            active.length === 0 ? (
+              <div className="rounded-2xl border border-white/5 bg-card p-12 text-center">
+                <Ticket size={24} className="text-gold mx-auto mb-4" />
+                <h3 className="text-lg mb-2">Nenhum ingresso ativo</h3>
+                <p className="text-text-muted text-sm mb-4">
+                  Quando você comprar um ingresso, ele aparece aqui.
                 </p>
                 <Link
                   href="/eventos"
-                  className="inline-flex items-center gap-1 text-xs text-gold hover-real:underline"
+                  className="text-sm text-gold hover-real:underline"
                 >
-                  Usar em um evento
-                  <ArrowRight size={12} />
+                  Ver eventos
                 </Link>
               </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-5">
+                {active.map((t) => (
+                  <TicketCard key={t.id} t={t} formatDate={formatDate} />
+                ))}
+              </div>
+            )
+          )}
+
+          {/* Histórico */}
+          {tab === "historico" && (
+            history.length === 0 ? (
+              <div className="rounded-2xl border border-white/5 bg-card p-12 text-center">
+                <p className="text-text-muted text-sm">Nenhum histórico ainda.</p>
+              </div>
+            ) : (
+              <ul className="rounded-2xl border border-white/5 bg-card overflow-hidden">
+                {history.map((h, i) => (
+                  <li
+                    key={h.id}
+                    className={cn(
+                      "p-5 flex items-center gap-4",
+                      i > 0 && "border-t border-white/5"
+                    )}
+                  >
+                    <div
+                      className="h-10 w-10 rounded-xl shrink-0 overflow-hidden"
+                      style={{
+                        background: h.eventoFoto
+                          ? `url(${h.eventoFoto}) center/cover`
+                          : "linear-gradient(135deg, rgba(255,211,0,0.15), #080604)",
+                      }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate">
+                        {h.eventoNome}
+                      </p>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        {h.eventoLocal} · {formatDate(h.eventoDataInicio)}
+                      </p>
+                    </div>
+                    {h.status === "USADO" ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-success">
+                        <Check size={12} />
+                        Check-in
+                      </span>
+                    ) : h.status === "TRANSFERIDO" ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-info">
+                        <Send size={12} />
+                        Transferido
+                      </span>
+                    ) : (
+                      <span className="text-xs text-text-muted">
+                        {h.status}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )
+          )}
+
+          {/* Cortesias */}
+          {tab === "cortesias" && (
+            <div className="rounded-2xl border border-white/5 bg-card p-12 text-center">
+              <Gift size={24} className="text-gold mx-auto mb-4" />
+              <h3 className="text-lg mb-2">Cortesias</h3>
+              <p className="text-text-muted text-sm">
+                Cortesias recebidas de casas parceiras e do Mais Vanta aparecem aqui.
+              </p>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       )}
 
-      {/* Dica de segurança */}
+      {/* Security tip */}
       <div className="rounded-2xl border border-white/5 bg-card p-5 flex items-start gap-3">
         <Shield size={14} className="text-gold shrink-0 mt-0.5" />
         <p className="text-xs text-text-muted leading-relaxed">
@@ -238,24 +269,28 @@ export default function CarteiraPage() {
   );
 }
 
-function TicketCard({ t }: { t: ActiveTicket }) {
-  const [flipped, setFlipped] = useState(false);
+function TicketCard({
+  t,
+  formatDate,
+}: {
+  t: RealTicket;
+  formatDate: (iso: string) => string;
+}) {
+  const gradient = t.eventoFoto
+    ? `url(${t.eventoFoto}) center/cover`
+    : "radial-gradient(circle at 30% 20%, rgba(255,211,0,0.32), transparent 55%), linear-gradient(140deg, #2a1d0a, #080604)";
 
   return (
     <div className="rounded-2xl border border-white/5 bg-card overflow-hidden">
-      <div className="relative h-40" style={{ background: t.gradient }}>
+      <div className="relative h-40" style={{ background: gradient }}>
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        {t.maisVanta && (
-          <span
-            className="absolute right-4 top-4 inline-flex items-center justify-center h-8 w-8 rounded-full bg-gold/15 border border-gold/40"
-            style={{ filter: "drop-shadow(0 0 4px rgba(255,211,0,0.5))" }}
-          >
-            <Crown size={12} className="text-gold" strokeWidth={2.5} />
-          </span>
-        )}
         <div className="absolute bottom-4 left-5 right-5">
-          <p className="kicker text-[0.6rem] mb-1">{t.date}</p>
-          <p className="font-display text-base leading-tight">{t.event}</p>
+          <p className="kicker text-[0.6rem] mb-1">
+            {formatDate(t.eventoDataInicio)}
+          </p>
+          <p className="font-display text-base leading-tight">
+            {t.eventoNome}
+          </p>
         </div>
       </div>
 
@@ -263,32 +298,24 @@ function TicketCard({ t }: { t: ActiveTicket }) {
         <div className="flex items-center gap-3 text-xs text-text-muted mb-4 flex-wrap">
           <span className="flex items-center gap-1.5">
             <MapPin size={12} className="text-gold" />
-            {t.venue}, {t.city}
+            {t.eventoLocal}
           </span>
           <span className="flex items-center gap-1.5">
             <Calendar size={12} className="text-gold" />
-            {t.date}
+            {formatDate(t.eventoDataInicio)}
           </span>
         </div>
 
         <div className="flex items-center gap-4 mb-5">
-          <button
-            onClick={() => setFlipped((v) => !v)}
-            className="relative h-24 w-24 rounded-xl bg-white p-2 shrink-0 cursor-pointer hover-real:brightness-95 transition-all duration-200"
-            aria-label="Ver QR do ingresso"
-          >
-            <QRPlaceholder code={t.code} blurred={!flipped} />
-          </button>
           <div className="flex-1 min-w-0">
             <p className="kicker text-[0.55rem] mb-1">ingresso</p>
             <p className="text-sm font-semibold mb-1 truncate">
-              {t.variation}
+              {t.variacaoLabel || "Geral"}
             </p>
-            <p className="text-xs text-text-muted mb-2">#{t.id}</p>
-            <p className="text-[0.65rem] text-text-muted leading-relaxed">
-              {flipped
-                ? "QR ativo. Mostre na portaria."
-                : "Clique no QR para revelar."}
+            <p className="text-xs text-text-muted">
+              {t.valor === 0
+                ? "Cortesia"
+                : `R$ ${t.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
             </p>
           </div>
         </div>
@@ -304,62 +331,6 @@ function TicketCard({ t }: { t: ActiveTicket }) {
           </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-function QRPlaceholder({
-  code,
-  blurred,
-}: {
-  code: string;
-  blurred?: boolean;
-}) {
-  // Gera um pseudo-QR visual baseado no hash do code (não é um QR real)
-  const seed = code
-    .split("")
-    .reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const cells: boolean[] = [];
-  let x = seed;
-  for (let i = 0; i < 81; i++) {
-    x = (x * 9301 + 49297) % 233280;
-    cells.push(x % 2 === 0);
-  }
-  const corners = [0, 6, 42, 48];
-
-  return (
-    <div className="relative h-full w-full">
-      <div className="grid grid-cols-9 gap-0 h-full w-full">
-        {cells.map((on, i) => {
-          const row = Math.floor(i / 9);
-          const col = i % 9;
-          const isCorner =
-            corners.some((c) => {
-              const cr = Math.floor(c / 9);
-              const cc = c % 9;
-              return (
-                Math.abs(row - cr) <= 1 && Math.abs(col - cc) <= 1
-              );
-            }) ||
-            (row === 0 && col === 0) ||
-            (row === 0 && col === 6) ||
-            (row === 6 && col === 0);
-          return (
-            <div
-              key={i}
-              className={cn(
-                "aspect-square",
-                on || isCorner ? "bg-black" : "bg-white",
-              )}
-            />
-          );
-        })}
-      </div>
-      {blurred && (
-        <div className="absolute inset-0 bg-white/70 backdrop-blur-md flex items-center justify-center rounded">
-          <Ticket size={16} className="text-black" />
-        </div>
-      )}
     </div>
   );
 }

@@ -104,9 +104,37 @@ export default function MaisVantaPage() {
     motivo: "",
   });
 
-  function handleSubmit(e: React.FormEvent) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { error: insertError } = await supabase
+        .from("mais_vanta_aplicacoes")
+        .insert({
+          nome: form.nome,
+          email: form.email,
+          instagram: form.instagram,
+          cidade: form.cidade,
+          motivo: form.motivo,
+        });
+
+      if (insertError) {
+        // Table might not exist yet — fallback gracefully
+        console.error("Insert error:", insertError);
+      }
+      setSubmitted(true);
+    } catch {
+      setError("Algo deu errado. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

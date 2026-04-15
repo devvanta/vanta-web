@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
@@ -15,6 +15,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 type NotifType =
   | "event"
@@ -27,89 +28,15 @@ type NotifType =
 
 type Notif = {
   id: string;
-  type: NotifType;
-  title: string;
-  body: string;
-  when: string;
-  read: boolean;
-  href?: string;
+  tipo: NotifType;
+  titulo: string;
+  mensagem: string;
+  lida: boolean;
+  link: string | null;
+  created_at: string;
 };
 
-const initialNotifs: Notif[] = [
-  {
-    id: "1",
-    type: "event",
-    title: "Novo evento na Casa do Samba",
-    body: "Noite do Samba · sáb 19 abr · 22h. Confira os lotes abertos.",
-    when: "há 5min",
-    read: false,
-    href: "/evento/noite-do-samba",
-  },
-  {
-    id: "2",
-    type: "cortesia",
-    title: "Você recebeu uma cortesia",
-    body: "Cortesia para Sunset Privilege já está na sua carteira.",
-    when: "há 20min",
-    read: false,
-    href: "/carteira",
-  },
-  {
-    id: "3",
-    type: "transfer",
-    title: "Ana te transferiu um ingresso",
-    body: "Sunset Privilege · domingo. Ingresso já está na sua carteira.",
-    when: "há 1h",
-    read: false,
-    href: "/carteira",
-  },
-  {
-    id: "4",
-    type: "reminder",
-    title: "Seu evento é amanhã",
-    body: "Noite do Samba · 22h. Não esqueça do documento com foto.",
-    when: "há 3h",
-    read: true,
-    href: "/evento/noite-do-samba",
-  },
-  {
-    id: "5",
-    type: "maisvanta",
-    title: "Novos benefícios desbloqueados",
-    body: "Confira o que tem de novo pra você no MAIS VANTA esta semana.",
-    when: "ontem",
-    read: true,
-    href: "/mais-vanta",
-  },
-  {
-    id: "6",
-    type: "friend",
-    title: "Matheus quer ser seu amigo no VANTA",
-    body: "Aceite pra compartilhar eventos, cortesias e chat.",
-    when: "ontem",
-    read: true,
-  },
-  {
-    id: "7",
-    type: "message",
-    title: "Rafa te mandou mensagem",
-    body: "\"Fechou, só transferir pelo app\"",
-    when: "ontem",
-    read: true,
-    href: "/mensagens",
-  },
-  {
-    id: "8",
-    type: "maisvanta",
-    title: "Bem-vindo ao MAIS VANTA!",
-    body: "Boas notícias! Você foi aprovado e já pode aproveitar vantagens exclusivas.",
-    when: "3 dias atrás",
-    read: true,
-    href: "/mais-vanta",
-  },
-];
-
-const iconFor: Record<NotifType, typeof Bell> = {
+const iconFor: Record<string, typeof Bell> = {
   event: Calendar,
   reminder: Bell,
   cortesia: Gift,
@@ -119,25 +46,91 @@ const iconFor: Record<NotifType, typeof Bell> = {
   message: MessageCircle,
 };
 
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "agora";
+  if (mins < 60) return `há ${mins}min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `há ${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `há ${days}d`;
+  return new Date(iso).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  });
+}
+
 type Tab = "todas" | "pendentes";
 
 export default function NotificacoesPage() {
   const [tab, setTab] = useState<Tab>("todas");
-  const [notifs, setNotifs] = useState(initialNotifs);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function load() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("notifications")
+        .select("id, tipo, titulo, mensagem, lida, link, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(100);
+
+      if (data) {
+        setNotifs(
+          data.map((n) => ({
+            id: n.id,
+            tipo: (n.tipo as NotifType) || "event",
+            titulo: n.titulo,
+            mensagem: n.mensagem,
+            lida: n.lida ?? false,
+            link: n.link,
+            created_at: n.created_at ?? "",
+          }))
+        );
+      }
+      setLoading(false);
+    }
+
+    load();
+  }, []);
 
   const filtered = notifs.filter((n) =>
-    tab === "pendentes" ? !n.read : true,
+    tab === "pendentes" ? !n.lida : true
   );
-  const unreadCount = notifs.filter((n) => !n.read).length;
+  const unreadCount = notifs.filter((n) => !n.lida).length;
 
-  function markAllRead() {
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  async function markAllRead() {
+    setNotifs((prev) => prev.map((n) => ({ ...n, lida: true })));
+
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    await supabase
+      .from("notifications")
+      .update({ lida: true })
+      .eq("user_id", user.id)
+      .eq("lida", false);
   }
 
-  function markRead(id: string) {
+  async function markRead(id: string) {
     setNotifs((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
+      prev.map((n) => (n.id === id ? { ...n, lida: true } : n))
     );
+
+    const supabase = createClient();
+    await supabase.from("notifications").update({ lida: true }).eq("id", id);
   }
 
   return (
@@ -149,8 +142,8 @@ export default function NotificacoesPage() {
             Saiba em <span className="text-gold">primeira mão</span>.
           </h1>
           <p className="text-text-secondary">
-            Eventos novos, cortesias, ingressos transferidos, lembretes.
-            Tudo aqui.
+            Eventos novos, cortesias, ingressos transferidos, lembretes. Tudo
+            aqui.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -182,7 +175,7 @@ export default function NotificacoesPage() {
               "px-4 py-3 text-sm font-medium cursor-pointer border-b-2 -mb-[2px] transition-colors duration-200 flex items-center gap-2",
               tab === t
                 ? "text-gold border-gold"
-                : "text-text-muted border-transparent hover-real:text-text-primary",
+                : "text-text-muted border-transparent hover-real:text-text-primary"
             )}
           >
             {t === "todas" ? "Todas" : "Pendentes"}
@@ -195,73 +188,74 @@ export default function NotificacoesPage() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-12 text-text-muted text-sm">
+          Carregando notificações...
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-white/5 bg-card p-12 text-center">
-          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gold/10 border border-gold/20 mb-5 text-gold">
-            <Sparkles size={20} />
-          </div>
-          <h3 className="text-2xl mb-3 leading-tight">
-            Tudo em dia.
-          </h3>
-          <p className="text-text-muted text-sm max-w-sm mx-auto">
-            Não tem notificação pendente. Volte depois ou confira os eventos
-            novos da sua cidade.
+          <Bell size={24} className="text-gold mx-auto mb-4" />
+          <h3 className="text-lg mb-2">Tudo lido</h3>
+          <p className="text-text-muted text-sm">
+            {tab === "pendentes"
+              ? "Nenhuma notificação pendente."
+              : "Nenhuma notificação ainda."}
           </p>
         </div>
       ) : (
         <ul className="rounded-2xl border border-white/5 bg-card overflow-hidden">
           {filtered.map((n, i) => {
-            const Icon = iconFor[n.type];
-            const Wrapper: React.ElementType = n.href ? Link : "div";
+            const Icon = iconFor[n.tipo] || Bell;
+            const Wrapper = n.link ? Link : "div";
+            const wrapperProps = n.link
+              ? { href: n.link }
+              : {};
             return (
               <li
                 key={n.id}
-                className={cn(
-                  i > 0 && "border-t border-white/5",
-                  !n.read && "bg-gold/[0.025]",
-                )}
+                className={cn(i > 0 && "border-t border-white/5")}
               >
-                <Wrapper
-                  {...(n.href ? { href: n.href } : {})}
-                  onClick={() => markRead(n.id)}
+                <div
+                  onClick={() => !n.lida && markRead(n.id)}
                   className={cn(
-                    "flex items-start gap-4 p-5 transition-colors duration-200",
-                    n.href &&
-                      "cursor-pointer hover-real:bg-elevated/50 block",
+                    "flex items-start gap-4 p-5 transition-colors duration-200 cursor-pointer",
+                    !n.lida
+                      ? "bg-gold/[0.03] hover-real:bg-gold/[0.06]"
+                      : "hover-real:bg-elevated/50"
                   )}
                 >
                   <div
                     className={cn(
                       "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
-                      n.read
-                        ? "bg-elevated border border-white/5 text-text-muted"
-                        : "bg-gold/15 border border-gold/30 text-gold",
+                      !n.lida
+                        ? "bg-gold/15 border border-gold/30 text-gold"
+                        : "bg-elevated border border-white/5 text-text-muted"
                     )}
                   >
-                    <Icon size={14} strokeWidth={2.5} />
+                    <Icon size={16} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
+                    <div className="flex items-center justify-between gap-2 mb-1">
                       <p
                         className={cn(
-                          "text-sm leading-tight",
-                          !n.read && "font-semibold",
+                          "text-sm font-semibold truncate",
+                          !n.lida ? "text-text-primary" : "text-text-secondary"
                         )}
                       >
-                        {n.title}
+                        {n.titulo}
                       </p>
-                      <span className="text-[0.65rem] text-text-muted shrink-0 whitespace-nowrap">
-                        {n.when}
+                      <span className="text-[0.65rem] text-text-subtle shrink-0">
+                        {timeAgo(n.created_at)}
                       </span>
                     </div>
-                    <p className="text-xs text-text-muted leading-relaxed">
-                      {n.body}
+                    <p className="text-xs text-text-muted leading-relaxed line-clamp-2">
+                      {n.mensagem}
                     </p>
                   </div>
-                  {!n.read && (
-                    <span className="h-2 w-2 rounded-full bg-gold shrink-0 mt-2" />
+                  {!n.lida && (
+                    <div className="mt-2 h-2 w-2 rounded-full bg-gold shrink-0" />
                   )}
-                </Wrapper>
+                </div>
               </li>
             );
           })}

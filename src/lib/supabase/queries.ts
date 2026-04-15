@@ -225,6 +225,76 @@ export async function getEventBySlug(
   return toEventCard(data as unknown as EventoRow);
 }
 
+export type LoteWithVariacoes = {
+  id: string;
+  nome: string;
+  ativo: boolean;
+  ordem: number;
+  variacoes: {
+    id: string;
+    area: string;
+    area_custom: string | null;
+    genero: string;
+    valor: number;
+    limite: number;
+    vendidos: number;
+    requer_comprovante: boolean;
+  }[];
+};
+
+export async function getEventLotes(
+  eventoId: string
+): Promise<LoteWithVariacoes[]> {
+  const supabase = await createClient();
+
+  const { data: lotes } = await supabase
+    .from("lotes")
+    .select("id, nome, ativo, ordem")
+    .eq("evento_id", eventoId)
+    .order("ordem", { ascending: true });
+
+  if (!lotes || lotes.length === 0) return [];
+
+  const loteIds = lotes.map((l) => l.id);
+
+  const { data: variacoes } = await supabase
+    .from("variacoes_ingresso")
+    .select(
+      "id, lote_id, area, area_custom, genero, valor, limite, vendidos, requer_comprovante"
+    )
+    .in("lote_id", loteIds);
+
+  return lotes.map((l) => ({
+    id: l.id,
+    nome: l.nome,
+    ativo: l.ativo,
+    ordem: l.ordem,
+    variacoes: (variacoes || [])
+      .filter((v) => v.lote_id === l.id)
+      .map((v) => ({
+        id: v.id,
+        area: v.area,
+        area_custom: v.area_custom,
+        genero: v.genero,
+        valor: Number(v.valor ?? 0),
+        limite: Number(v.limite ?? 100),
+        vendidos: Number(v.vendidos ?? 0),
+        requer_comprovante: v.requer_comprovante,
+      })),
+  }));
+}
+
+export async function getEventIdBySlug(slug: string): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("eventos_admin")
+    .select("id")
+    .eq("slug", slug)
+    .eq("publicado", true)
+    .maybeSingle();
+  return data?.id ?? null;
+}
+
 export async function getCities(): Promise<
   { name: string; slug: string }[]
 > {

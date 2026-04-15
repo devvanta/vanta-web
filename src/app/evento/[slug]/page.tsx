@@ -16,7 +16,13 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/site/event-card";
-import { getEventBySlug, getPublicEvents } from "@/lib/supabase/queries";
+import {
+  getEventBySlug,
+  getEventIdBySlug,
+  getEventLotes,
+  getPublicEvents,
+  type LoteWithVariacoes,
+} from "@/lib/supabase/queries";
 import { genreBySlug } from "@/lib/genres";
 import { cn } from "@/lib/utils";
 
@@ -49,8 +55,14 @@ export default async function EventPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const event = await getEventBySlug(slug);
+  const [event, eventoId] = await Promise.all([
+    getEventBySlug(slug),
+    getEventIdBySlug(slug),
+  ]);
   if (!event) notFound();
+
+  const lotes = eventoId ? await getEventLotes(eventoId) : [];
+  const loteAtivo = lotes.find((l) => l.ativo) ?? lotes[lotes.length - 1] ?? null;
 
   const genre = event.genre ? genreBySlug.get(event.genre) : null;
 
@@ -325,23 +337,129 @@ export default async function EventPage({
               <div className="rounded-2xl bg-card border border-white/5 p-6">
                 <div className="flex items-center justify-between mb-5">
                   <span className="kicker">ingressos</span>
+                  {loteAtivo && lotes.length > 1 && (
+                    <span className="text-[0.6rem] text-text-muted uppercase tracking-widest">
+                      {loteAtivo.nome}
+                    </span>
+                  )}
                 </div>
 
-                <div className="text-center py-8">
-                  <p className="text-sm text-text-muted mb-2">
-                    A partir de
-                  </p>
-                  <p className="text-3xl font-semibold text-gold mb-4">
-                    {event.priceLabel}
-                  </p>
-                  <p className="text-xs text-text-muted">
-                    Compra disponível pelo app VANTA
-                  </p>
-                </div>
+                {loteAtivo && loteAtivo.variacoes.length > 0 ? (
+                  <div className="space-y-3">
+                    {loteAtivo.variacoes.map((v) => {
+                      const esgotado = v.vendidos >= v.limite;
+                      const disponivel = Math.max(0, v.limite - v.vendidos);
+                      const poucos =
+                        !esgotado && disponivel <= Math.ceil(v.limite * 0.2);
+                      const soldPct =
+                        v.limite > 0
+                          ? Math.round((v.vendidos / v.limite) * 100)
+                          : 0;
+                      const areaLabel =
+                        v.area === "OUTRO" && v.area_custom
+                          ? v.area_custom
+                          : v.area;
+                      const generoLabel =
+                        v.genero === "UNISEX"
+                          ? ""
+                          : v.genero === "MASCULINO"
+                            ? " · Masc"
+                            : " · Fem";
+
+                      return (
+                        <div
+                          key={v.id}
+                          className={cn(
+                            "rounded-xl border p-4 transition-colors duration-200",
+                            esgotado
+                              ? "border-white/5 bg-elevated/20 opacity-60"
+                              : v.requer_comprovante
+                                ? "border-info/30 bg-info/[0.03]"
+                                : "border-white/5 bg-elevated/40 hover-real:border-white/15"
+                          )}
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="text-sm font-semibold">
+                                  {areaLabel}
+                                  {generoLabel}
+                                </p>
+                                {v.requer_comprovante && (
+                                  <span className="text-[0.55rem] uppercase tracking-[0.14em] bg-info/15 text-info px-2 py-0.5 rounded-full font-semibold">
+                                    Meia
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <span
+                              className={cn(
+                                "text-sm font-semibold whitespace-nowrap",
+                                esgotado
+                                  ? "text-text-muted line-through"
+                                  : "text-gold"
+                              )}
+                            >
+                              {v.valor === 0
+                                ? "Grátis"
+                                : `R$ ${v.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between mt-3">
+                            <div className="flex-1 h-1 rounded-full bg-white/5 overflow-hidden mr-4">
+                              <div
+                                className={cn(
+                                  "h-full",
+                                  esgotado
+                                    ? "bg-error"
+                                    : poucos
+                                      ? "bg-warning"
+                                      : "bg-gold/80"
+                                )}
+                                style={{ width: `${Math.min(soldPct, 100)}%` }}
+                              />
+                            </div>
+                            <span
+                              className={cn(
+                                "text-[0.65rem] kicker",
+                                esgotado
+                                  ? "text-error"
+                                  : poucos
+                                    ? "text-warning"
+                                    : "text-text-muted"
+                              )}
+                            >
+                              {esgotado
+                                ? "Esgotado"
+                                : poucos
+                                  ? `Últimos ${disponivel}`
+                                  : `${disponivel} restantes`}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Last batch warning */}
+                    {lotes.length > 1 &&
+                      loteAtivo.ordem === lotes[lotes.length - 1]?.ordem && (
+                        <p className="text-[0.65rem] text-warning text-center font-semibold uppercase tracking-widest">
+                          Último lote
+                        </p>
+                      )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-sm text-text-muted mb-2">A partir de</p>
+                    <p className="text-3xl font-semibold text-gold mb-4">
+                      {event.priceLabel}
+                    </p>
+                  </div>
+                )}
 
                 <div className="mt-6 pt-6 border-t border-white/5">
                   <Button className="w-full" size="lg">
-                    Baixar o app
+                    Garantir ingresso
                   </Button>
                   <p className="text-xs text-text-muted text-center mt-3">
                     Pagamento seguro. Ingresso entra direto na sua carteira.

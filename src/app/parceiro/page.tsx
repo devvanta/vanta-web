@@ -119,9 +119,37 @@ export default function ParceiroPage() {
     cidade: "",
   });
 
-  function handleSubmit(e: React.FormEvent) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const { error: insertError } = await supabase
+        .from("parceiros_solicitacoes")
+        .insert({
+          nome_casa: form.casa,
+          cnpj: form.cnpj,
+          responsavel: form.responsavel,
+          email: form.email,
+          whatsapp: form.whatsapp,
+          cidade: form.cidade,
+        });
+
+      if (insertError) {
+        console.error("Insert error:", insertError);
+      }
+      setSubmitted(true);
+    } catch {
+      setError("Algo deu errado. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

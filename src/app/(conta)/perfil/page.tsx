@@ -96,10 +96,26 @@ export default function PerfilPage() {
     loadProfile();
   }, []);
 
-  function togglePrivacy(key: string) {
-    setFields((prev) =>
-      prev.map((f) => (f.key === key ? { ...f, public: !f.public } : f)),
+  async function togglePrivacy(key: string) {
+    const updated = fields.map((f) =>
+      f.key === key ? { ...f, public: !f.public } : f
     );
+    setFields(updated);
+
+    // Persist to Supabase
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const privacyObj: Record<string, boolean> = {};
+    for (const f of updated) {
+      privacyObj[f.key] = f.public;
+    }
+
+    await supabase
+      .from("profiles")
+      .update({ privacy_settings: privacyObj })
+      .eq("id", user.id);
   }
 
   return (
@@ -306,7 +322,7 @@ export default function PerfilPage() {
         >
           <Ticket size={16} className="text-gold mb-3" />
           <p className="text-sm font-semibold mb-1">Minha carteira</p>
-          <p className="text-xs text-text-muted">3 ingressos ativos</p>
+          <p className="text-xs text-text-muted">{stats[0].value} ingressos</p>
         </Link>
         <Link
           href="/amigos"
@@ -314,7 +330,7 @@ export default function PerfilPage() {
         >
           <Users size={16} className="text-gold mb-3" />
           <p className="text-sm font-semibold mb-1">Amigos</p>
-          <p className="text-xs text-text-muted">47 na sua rede</p>
+          <p className="text-xs text-text-muted">{stats[1].value} na sua rede</p>
         </Link>
         <Link
           href="/favoritos"
