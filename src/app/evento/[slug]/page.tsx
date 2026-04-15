@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/site/event-card";
+import { EventLocationMap } from "@/components/site/event-location-map";
 import {
   getEventBySlug,
   getEventIdBySlug,
@@ -245,14 +246,11 @@ export default async function EventPage({
               <h2 className="text-2xl md:text-3xl mb-5">Como chegar.</h2>
               <div className="rounded-2xl overflow-hidden border border-white/5 bg-card">
                 {event.lat != null && event.lng != null ? (
-                  <div className="relative aspect-[16/9]">
-                    <iframe
-                      title={`Mapa de ${event.venue}`}
-                      className="absolute inset-0 w-full h-full grayscale-[40%] contrast-110"
-                      loading="lazy"
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${event.lng - 0.005}%2C${event.lat - 0.005}%2C${event.lng + 0.005}%2C${event.lat + 0.005}&layer=mapnik&marker=${event.lat}%2C${event.lng}`}
-                    />
-                  </div>
+                  <EventLocationMap
+                    lat={event.lat}
+                    lng={event.lng}
+                    venue={event.venue}
+                  />
                 ) : (
                   <div
                     className="aspect-[16/9] flex items-center justify-center"
