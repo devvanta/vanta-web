@@ -23,6 +23,7 @@ import {
   getPublicEvents,
   type LoteWithVariacoes,
 } from "@/lib/supabase/queries";
+import { createClient } from "@/lib/supabase/server";
 import { genreBySlug } from "@/lib/genres";
 import { cn } from "@/lib/utils";
 
@@ -55,11 +56,15 @@ export default async function EventPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [event, eventoId] = await Promise.all([
+  const [event, eventoId, supabase] = await Promise.all([
     getEventBySlug(slug),
     getEventIdBySlug(slug),
+    createClient(),
   ]);
   if (!event) notFound();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const isLoggedIn = !!user;
 
   const lotes = eventoId ? await getEventLotes(eventoId) : [];
   const loteAtivo = lotes.find((l) => l.ativo) ?? lotes[lotes.length - 1] ?? null;
@@ -458,9 +463,15 @@ export default async function EventPage({
                 )}
 
                 <div className="mt-6 pt-6 border-t border-white/5">
-                  <Button className="w-full" size="lg">
-                    Garantir ingresso
-                  </Button>
+                  {isLoggedIn ? (
+                    <Button className="w-full" size="lg">
+                      Garantir ingresso
+                    </Button>
+                  ) : (
+                    <Button href={`/entrar?next=/evento/${slug}`} className="w-full" size="lg">
+                      Entrar pra comprar
+                    </Button>
+                  )}
                   <p className="text-xs text-text-muted text-center mt-3">
                     Pagamento seguro. Ingresso entra direto na sua carteira.
                   </p>

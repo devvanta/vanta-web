@@ -66,6 +66,7 @@ type EventoRow = {
   categoria: string | null;
   classificacao_etaria: string;
   comunidade_id: string | null;
+  mais_vanta_config_evento: { id: string; ativo: boolean }[];
   variacoes_ingresso: {
     id: string;
     nome: string;
@@ -143,7 +144,7 @@ function toEventCard(row: EventoRow): EventCardData {
     dateLabel: formatDateLabel(row.data_inicio),
     priceLabel: formatPrice(lowestPrice),
     status: getEventStatus(row),
-    maisVanta: false, // TODO: join com mais_vanta_config_evento quando integrar
+    maisVanta: (row.mais_vanta_config_evento || []).some((mv) => mv.ativo),
     gradient: row.foto
       ? `url(${row.foto}) center/cover`
       : pickGradient(row.id),
@@ -170,6 +171,7 @@ export async function getPublicEvents(options?: {
       id, slug, nome, local, cidade, data_inicio, data_fim,
       descricao, endereco, foto, estilos, coords, publicado,
       status_evento, categoria, classificacao_etaria, comunidade_id,
+      mais_vanta_config_evento ( id, ativo ),
       variacoes_ingresso (
         id, nome,
         lotes ( preco, nome, quantidade_total, quantidade_vendida, ativo )
@@ -210,6 +212,7 @@ export async function getEventBySlug(
       id, slug, nome, local, cidade, data_inicio, data_fim,
       descricao, endereco, foto, estilos, coords, publicado,
       status_evento, categoria, classificacao_etaria, comunidade_id,
+      mais_vanta_config_evento ( id, ativo ),
       variacoes_ingresso (
         id, nome,
         lotes ( preco, nome, quantidade_total, quantidade_vendida, ativo )

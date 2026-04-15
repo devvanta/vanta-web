@@ -74,7 +74,7 @@ function toEventCard(row: any): EventCardData {
     dateLabel: formatDateLabel(row.data_inicio),
     priceLabel: formatPrice(lowestPrice),
     status,
-    maisVanta: false,
+    maisVanta: (row.mais_vanta_config_evento || []).some((mv: { ativo: boolean }) => mv.ativo),
     gradient: row.foto ? `url(${row.foto}) center/cover` : pickGradient(row.id),
     genre: row.estilos?.[0] || undefined,
     priceCents: lowestPrice ?? undefined,
@@ -99,6 +99,7 @@ export function useEvents() {
         id, slug, nome, local, cidade, data_inicio, data_fim,
         descricao, endereco, foto, estilos, coords, publicado,
         status_evento, categoria, classificacao_etaria, comunidade_id,
+        mais_vanta_config_evento ( id, ativo ),
         variacoes_ingresso (
           id, nome,
           lotes ( preco, nome, quantidade_total, quantidade_vendida, ativo )
