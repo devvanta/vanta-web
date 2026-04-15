@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -17,9 +17,9 @@ import {
 import { Container } from "@/components/ui/container";
 import { EventCard } from "@/components/site/event-card";
 import { useEvents } from "@/lib/supabase/use-events";
-import { cities } from "@/lib/cities";
 import { genres } from "@/lib/genres";
 import { cn } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 
 const trending = [
   "Sunset",
@@ -38,9 +38,31 @@ type Suggestion =
   | { kind: "city"; label: string; meta: string; href: string }
   | { kind: "genre"; label: string; meta: string; href: string };
 
+type CityItem = { name: string; slug: string; state?: string };
+
 export default function BuscarPage() {
   const { events: allEvents } = useEvents();
   const [q, setQ] = useState("");
+  const [cities, setCities] = useState<CityItem[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("eventos_admin")
+      .select("cidade")
+      .eq("publicado", true)
+      .gte("data_inicio", new Date().toISOString())
+      .then(({ data }) => {
+        if (!data) return;
+        const unique = [...new Set(data.map((r) => r.cidade).filter(Boolean))] as string[];
+        setCities(
+          unique.sort().map((c) => ({
+            name: c,
+            slug: c.toLowerCase().replace(/\s+/g, "-"),
+          }))
+        );
+      });
+  }, []);
 
   const filteredEvents = useMemo(() => {
     if (!q.trim()) return [];
@@ -78,7 +100,7 @@ export default function BuscarPage() {
         out.push({
           kind: "city",
           label: c.name,
-          meta: `Cidade · ${c.state}`,
+          meta: "Cidade",
           href: `/eventos?cidade=${c.slug}`,
         });
       }

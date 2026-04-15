@@ -64,13 +64,20 @@ export default function PerfilPage() {
 
       const { data: prof } = await supabase
         .from("profiles")
-        .select("nome, instagram, cidade, avatar_url, created_at, privacy_settings")
+        .select("nome, instagram, cidade, avatar_url, created_at, privacidade")
         .eq("id", user.id)
         .maybeSingle();
 
       if (prof) {
-        setProfile(prof as Profile);
-        const ps = (prof.privacy_settings || {}) as Record<string, boolean>;
+        setProfile({
+          nome: prof.nome,
+          instagram: prof.instagram,
+          cidade: prof.cidade,
+          avatar_url: prof.avatar_url,
+          created_at: prof.created_at,
+          privacy_settings: (prof.privacidade as Record<string, boolean>) ?? null,
+        });
+        const ps = ((prof.privacidade as Record<string, boolean>) || {});
         setFields(defaultPrivacyFields.map(f => ({
           ...f,
           public: ps[f.key] !== undefined ? ps[f.key] : f.public,
@@ -79,7 +86,7 @@ export default function PerfilPage() {
 
       // Fetch stats
       const [ticketsRes, friendsRes] = await Promise.all([
-        supabase.from("ingressos").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("tickets_caixa").select("id", { count: "exact", head: true }).eq("owner_id", user.id),
         supabase.from("friendships").select("id", { count: "exact", head: true })
           .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
           .eq("status", "accepted"),
@@ -114,7 +121,7 @@ export default function PerfilPage() {
 
     await supabase
       .from("profiles")
-      .update({ privacy_settings: privacyObj })
+      .update({ privacidade: privacyObj })
       .eq("id", user.id);
   }
 
