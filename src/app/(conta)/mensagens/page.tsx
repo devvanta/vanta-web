@@ -118,6 +118,85 @@ export default function MensagensPage() {
     load();
   }, []);
 
+  // Realtime: listen for new messages
+  useEffect(() => {
+    if (!userId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("messages-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `recipient_id=eq.${userId}`,
+        },
+        (payload) => {
+          const msg = payload.new as {
+            id: string;
+            sender_id: string;
+            recipient_id: string;
+            text: string;
+            created_at: string;
+            is_read: boolean;
+          };
+
+          // Update messages if we're chatting with this sender
+          if (msg.sender_id === activePartnerId) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: msg.id,
+                senderId: msg.sender_id,
+                text: msg.text,
+                createdAt: msg.created_at,
+                isRead: false,
+              },
+            ]);
+          }
+
+          // Update inbox
+          setInbox((prev) => {
+            const existing = prev.find((e) => e.partnerId === msg.sender_id);
+            if (existing) {
+              return prev.map((e) =>
+                e.partnerId === msg.sender_id
+                  ? {
+                      ...e,
+                      lastText: msg.text,
+                      lastTs: msg.created_at,
+                      unreadCount:
+                        msg.sender_id === activePartnerId
+                          ? e.unreadCount
+                          : e.unreadCount + 1,
+                    }
+                  : e
+              );
+            }
+            // New conversation partner
+            return [
+              {
+                partnerId: msg.sender_id,
+                partnerNome: "",
+                partnerFoto: null,
+                lastText: msg.text,
+                lastTs: msg.created_at,
+                unreadCount: 1,
+              },
+              ...prev,
+            ];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, activePartnerId]);
+
   // Load history when active partner changes
   useEffect(() => {
     if (!activePartnerId || !userId) return;
@@ -151,8 +230,8 @@ export default function MensagensPage() {
       await supabase
         .from("messages")
         .update({ is_read: true, read_at: new Date().toISOString() })
-        .eq("recipient_id", userId)
-        .eq("sender_id", activePartnerId)
+        .eq("recipient_id", userId!)
+        .eq("sender_id", activePartnerId!)
         .eq("is_read", false);
 
       // Update inbox unread count

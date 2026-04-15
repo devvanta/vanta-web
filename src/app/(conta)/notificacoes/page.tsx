@@ -68,6 +68,8 @@ export default function NotificacoesPage() {
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [userId, setUserId] = useState<string | null>(null);
+
   useEffect(() => {
     const supabase = createClient();
 
@@ -76,6 +78,7 @@ export default function NotificacoesPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
+      setUserId(user.id);
 
       const { data } = await supabase
         .from("notifications")
@@ -102,6 +105,52 @@ export default function NotificacoesPage() {
 
     load();
   }, []);
+
+  // Realtime: listen for new notifications
+  useEffect(() => {
+    if (!userId) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel("notifications-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          const n = payload.new as {
+            id: string;
+            tipo: string;
+            titulo: string;
+            mensagem: string;
+            lida: boolean;
+            link: string | null;
+            created_at: string;
+          };
+          setNotifs((prev) => [
+            {
+              id: n.id,
+              tipo: (n.tipo as NotifType) || "event",
+              titulo: n.titulo,
+              mensagem: n.mensagem,
+              lida: n.lida ?? false,
+              link: n.link,
+              created_at: n.created_at ?? "",
+            },
+            ...prev,
+          ]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
   const filtered = notifs.filter((n) =>
     tab === "pendentes" ? !n.lida : true
