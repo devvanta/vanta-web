@@ -60,9 +60,10 @@ function EntrarContent() {
       return;
     }
 
-    // Redirect to ?next param or home
+    // Redirect to ?next param or home (validate to prevent open redirect)
     const next = searchParams.get("next");
-    window.location.href = next && next.startsWith("/") ? next : "/";
+    const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
+    window.location.href = safeNext;
   }
 
   return (

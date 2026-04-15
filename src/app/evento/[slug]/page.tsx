@@ -6,9 +6,7 @@ import {
   ChevronRight,
   Clock,
   Crown,
-  Heart,
   MapPin,
-  Share2,
   Ticket as TicketIcon,
   Users,
 } from "lucide-react";
