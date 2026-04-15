@@ -2938,6 +2938,42 @@ export type Database = {
           },
         ]
       }
+      mais_vanta_aplicacoes: {
+        Row: {
+          cidade: string
+          created_at: string
+          email: string
+          id: string
+          instagram: string
+          motivo: string
+          nome: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cidade: string
+          created_at?: string
+          email: string
+          id?: string
+          instagram: string
+          motivo: string
+          nome: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cidade?: string
+          created_at?: string
+          email?: string
+          id?: string
+          instagram?: string
+          motivo?: string
+          nome?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mais_vanta_config: {
         Row: {
           atualizado_em: string | null
@@ -3641,6 +3677,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      parceiros_solicitacoes: {
+        Row: {
+          cidade: string
+          cnpj: string | null
+          created_at: string
+          email: string
+          id: string
+          nome_casa: string
+          responsavel: string
+          status: string
+          updated_at: string
+          whatsapp: string | null
+        }
+        Insert: {
+          cidade: string
+          cnpj?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          nome_casa: string
+          responsavel: string
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Update: {
+          cidade?: string
+          cnpj?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          nome_casa?: string
+          responsavel?: string
+          status?: string
+          updated_at?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
       }
       passport_aprovacoes: {
         Row: {
