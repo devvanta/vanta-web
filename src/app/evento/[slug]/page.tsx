@@ -81,7 +81,7 @@ export default async function EventPage({
 
   const description =
     event.description ??
-    `${event.name} acontece no ${event.venue}, em ${event.city}. Abertura ${event.dateLabel}. Três sets com DJs locais e convidados.`;
+    `${event.name} acontece no ${event.venue}, em ${event.city}. ${event.dateLabel}.`;
 
   const address = event.address ?? `${event.venue} — ${event.city}`;
 
@@ -156,7 +156,7 @@ export default async function EventPage({
                 <Info icon={Calendar} label={event.dateLabel} />
                 <Info icon={MapPin} label={`${event.venue}, ${event.city}`} />
                 <Info icon={Clock} label="Abertura 22h" />
-                <Info icon={Users} label="+18 com documento original" />
+                <Info icon={Users} label="Documento original na entrada" />
               </div>
 
             </div>
@@ -233,7 +233,7 @@ export default async function EventPage({
               <span className="kicker mb-3 inline-block">regras da casa</span>
               <ul className="space-y-2">
                 {[
-                  "Entrada permitida a partir de 18 anos com documento original",
+                  "Documento original obrigatório na entrada",
                   "Não é permitida a entrada de bebidas de fora",
                   "Ingresso é pessoal e intransferível fora do app VANTA",
                   "Em caso de cancelamento, reembolso em até 7 dias",

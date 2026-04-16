@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Crown, Filter, MapPin, Search, X } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { EventCard } from "@/components/site/event-card";
@@ -67,13 +68,26 @@ function inPriceBand(cents: number | undefined, band: PriceBand): boolean {
 }
 
 export default function EventosPage() {
+  return <Suspense><EventosContent /></Suspense>;
+}
+
+function EventosContent() {
   const { events: allEvents, loading } = useEvents();
+  const searchParams = useSearchParams();
   const [city, setCity] = useState<string>("all");
   const [datePreset, setDatePreset] = useState<DatePreset>("all");
   const [priceBand, setPriceBand] = useState<PriceBand>("all");
   const [maisVantaOnly, setMaisVantaOnly] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
+
+  // Read URL params (from /buscar links)
+  useEffect(() => {
+    const cidadeParam = searchParams.get("cidade");
+    const generoParam = searchParams.get("genero");
+    if (cidadeParam) setCity(cidadeParam);
+    if (generoParam) setSelectedGenres(new Set([generoParam]));
+  }, [searchParams]);
 
   const filtered = useMemo(() => {
     return allEvents.filter((e) => {

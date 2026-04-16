@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ArrowLeft,
   ArrowRight,
   Check,
   CheckCheck,
@@ -399,6 +400,12 @@ export default function MensagensPage() {
                 <>
                   {/* Chat header */}
                   <div className="px-5 py-3 border-b border-white/5 flex items-center gap-3">
+                    <button
+                      onClick={() => setActivePartnerId(null)}
+                      className="md:hidden h-8 w-8 rounded-full bg-elevated flex items-center justify-center text-text-muted hover-real:text-text-primary cursor-pointer shrink-0"
+                    >
+                      <ArrowLeft size={14} />
+                    </button>
                     {activePartner.partnerFoto ? (
                       <img
                         src={activePartner.partnerFoto}

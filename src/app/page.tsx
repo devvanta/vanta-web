@@ -30,7 +30,6 @@ export default async function Home() {
     <>
       <Hero events={events} />
       <EventsShowcase events={events} />
-      <VantaIndica />
       <MaisVantaSection />
       <Notifications />
       <ForProducers />

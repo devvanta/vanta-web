@@ -167,7 +167,7 @@ export default function BuscarPage() {
       <div className="mb-12">
         <div className="flex items-center gap-2 mb-3">
           <TrendingUp size={14} className="text-gold" />
-          <span className="kicker">buscas populares</span>
+          <span className="kicker">sugestões</span>
         </div>
         <div className="flex flex-wrap gap-2">
           {trending.map((t) => (
