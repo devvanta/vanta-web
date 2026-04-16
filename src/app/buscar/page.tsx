@@ -51,7 +51,8 @@ export default function BuscarPage() {
       .from("eventos_admin")
       .select("cidade")
       .eq("publicado", true)
-      .gte("data_inicio", new Date().toISOString())
+      .eq("status_evento", "ATIVO")
+      .gte("data_fim", new Date().toISOString())
       .then(({ data }) => {
         if (!data) return;
         const unique = [...new Set(data.map((r) => r.cidade).filter(Boolean))] as string[];

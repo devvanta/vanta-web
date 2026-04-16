@@ -167,7 +167,8 @@ export async function getPublicEvents(options?: {
     `
     )
     .eq("publicado", true)
-    .gte("data_inicio", new Date().toISOString())
+    .eq("status_evento", "ATIVO")
+    .gte("data_fim", new Date().toISOString())
     .order("data_inicio", { ascending: true });
 
   if (options?.city) {
@@ -295,7 +296,8 @@ export async function getCities(): Promise<
     .from("eventos_admin")
     .select("cidade")
     .eq("publicado", true)
-    .gte("data_inicio", new Date().toISOString());
+    .eq("status_evento", "ATIVO")
+    .gte("data_fim", new Date().toISOString());
 
   if (!data) return [];
 

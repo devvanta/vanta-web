@@ -131,7 +131,8 @@ export function useEvents() {
         )
       `)
       .eq("publicado", true)
-      .gte("data_inicio", new Date().toISOString())
+      .eq("status_evento", "ATIVO")
+      .gte("data_fim", new Date().toISOString())
       .order("data_inicio", { ascending: true })
       .then(({ data, error }) => {
         if (!error && data) {
