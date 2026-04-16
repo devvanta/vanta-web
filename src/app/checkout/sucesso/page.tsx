@@ -22,14 +22,16 @@ export default function CheckoutSucessoPage() {
   );
 }
 
-type Status = "polling" | "confirmed" | "failed" | "timeout" | "free";
+type Status = "polling" | "confirmed" | "failed" | "timeout" | "free" | "missing";
 
 function SucessoContent() {
   const searchParams = useSearchParams();
   const pedidoId = searchParams.get("pedido_id");
   const isFree = searchParams.get("free") === "true";
 
-  const [status, setStatus] = useState<Status>(isFree ? "free" : "polling");
+  const [status, setStatus] = useState<Status>(
+    isFree ? "free" : pedidoId ? "polling" : "missing"
+  );
   const [eventName, setEventName] = useState<string | null>(null);
   const [ticketCount, setTicketCount] = useState(0);
   const [attempts, setAttempts] = useState(0);
@@ -195,6 +197,33 @@ function SucessoContent() {
             <Button href="/eventos" size="lg" className="w-full">
               Voltar pros eventos
             </Button>
+          </>
+        )}
+
+        {/* Missing pedido_id */}
+        {status === "missing" && (
+          <>
+            <div className="inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-error/15 border border-error/40 text-error mb-8">
+              <AlertCircle size={36} />
+            </div>
+            <h1 className="text-3xl leading-tight mb-4">
+              Pagamento não encontrado
+            </h1>
+            <p className="text-text-secondary mb-10">
+              Não foi possível identificar o pedido. Verifique sua carteira no app.
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button href="/carteira" size="lg" className="w-full">
+                <Ticket size={16} />
+                Verificar carteira
+              </Button>
+              <Link
+                href="/eventos"
+                className="text-sm text-text-muted hover-real:text-gold transition-colors"
+              >
+                Voltar pros eventos
+              </Link>
+            </div>
           </>
         )}
 

@@ -122,12 +122,17 @@ export default function CarteiraPage() {
 
   function formatDate(iso: string) {
     const d = new Date(iso);
-    const dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    const meses = [
-      "jan", "fev", "mar", "abr", "mai", "jun",
-      "jul", "ago", "set", "out", "nov", "dez",
-    ];
-    return `${dias[d.getDay()]} · ${d.getDate()} ${meses[d.getMonth()]} · ${d.getHours()}h`;
+    const parts = d.toLocaleDateString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+    const hora = d.toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: "numeric",
+    });
+    return `${parts} · ${hora}`;
   }
 
   return (

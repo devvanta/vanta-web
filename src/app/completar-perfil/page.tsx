@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Calendar, Check, Shield } from "lucide-react";
+import { ArrowRight, Calendar, Check, Loader2, Shield } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/site/logo";
@@ -48,12 +48,17 @@ export default function CompletarPerfilPage() {
   const [lgpd, setLgpd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [authChecking, setAuthChecking] = useState(true);
 
   // Auth guard
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) window.location.href = "/entrar";
+      if (!user) {
+        window.location.href = "/entrar";
+      } else {
+        setAuthChecking(false);
+      }
     });
   }, []);
 
@@ -93,6 +98,17 @@ export default function CompletarPerfilPage() {
 
     // Redirect to onboarding
     window.location.href = "/onboarding";
+  }
+
+  if (authChecking) {
+    return (
+      <Container size="sm" className="py-16 md:py-24">
+        <div className="flex flex-col items-center justify-center min-h-[300px]">
+          <Loader2 size={32} className="text-gold animate-spin mb-4" />
+          <p className="text-sm text-text-muted">Carregando...</p>
+        </div>
+      </Container>
+    );
   }
 
   return (

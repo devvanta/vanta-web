@@ -49,12 +49,17 @@ type Lote = {
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
-  const dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-  const meses = [
-    "jan", "fev", "mar", "abr", "mai", "jun",
-    "jul", "ago", "set", "out", "nov", "dez",
-  ];
-  return `${dias[d.getDay()]} · ${d.getDate()} ${meses[d.getMonth()]} · ${d.getHours()}h`;
+  const parts = d.toLocaleDateString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+  const hora = d.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "numeric",
+  });
+  return `${parts} · ${hora}`;
 }
 
 export default function CheckoutPage() {
@@ -316,7 +321,8 @@ export default function CheckoutPage() {
         const birth = new Date(userDobRef.current);
         const today = new Date();
         let age = today.getFullYear() - birth.getFullYear();
-        if (today < new Date(today.getFullYear(), birth.getMonth(), birth.getDate())) age--;
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
         if (age < minAge) {
           setError(`Este evento é restrito para maiores de ${minAge} anos.`);
           return;

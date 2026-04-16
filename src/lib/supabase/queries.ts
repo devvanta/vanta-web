@@ -21,26 +21,17 @@ function pickGradient(id: string): string {
 
 function formatDateLabel(dateStr: string): string {
   const date = new Date(dateStr);
-  const dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-  const meses = [
-    "jan",
-    "fev",
-    "mar",
-    "abr",
-    "mai",
-    "jun",
-    "jul",
-    "ago",
-    "set",
-    "out",
-    "nov",
-    "dez",
-  ];
-  const dia = dias[date.getDay()];
-  const num = date.getDate();
-  const mes = meses[date.getMonth()];
-  const hora = `${date.getHours()}h`;
-  return `${dia} · ${num} ${mes} · ${hora}`;
+  const parts = date.toLocaleDateString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+  const hora = date.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    hour: "numeric",
+  });
+  return `${parts} · ${hora}`;
 }
 
 function formatPrice(reais: number | null): string {

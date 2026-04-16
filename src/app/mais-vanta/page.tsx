@@ -314,13 +314,25 @@ export default function MaisVantaPage() {
                       Você receberá um e-mail em até 72h. Enquanto isso, já
                       pode explorar os eventos da sua cidade.
                     </p>
-                    <Link
-                      href="/eventos"
-                      className="inline-flex items-center gap-1 text-sm text-gold hover-real:underline mt-3"
-                    >
-                      Ver eventos
-                      <ArrowRight size={12} />
-                    </Link>
+                    <div className="flex items-center gap-4 mt-3">
+                      <Link
+                        href="/eventos"
+                        className="inline-flex items-center gap-1 text-sm text-gold hover-real:underline"
+                      >
+                        Ver eventos
+                        <ArrowRight size={12} />
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setSubmitted(false);
+                          setForm({ nome: "", email: "", instagram: "", cidade: "", motivo: "" });
+                          setError(null);
+                        }}
+                        className="text-sm text-text-muted hover-real:text-text-primary transition-colors cursor-pointer"
+                      >
+                        Enviar outra
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (

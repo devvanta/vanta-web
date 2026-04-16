@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
@@ -25,6 +26,36 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { genreBySlug } from "@/lib/genres";
 import { cn } from "@/lib/utils";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const event = await getEventBySlug(slug);
+
+  if (!event) {
+    return { title: "Evento não encontrado — VANTA" };
+  }
+
+  const title = `${event.name} — ${event.venue}, ${event.city} | VANTA`;
+  const description =
+    event.description ??
+    `${event.name} acontece no ${event.venue}, em ${event.city}. ${event.dateLabel}. Garanta seu ingresso.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      ...(event.gradient.startsWith("url(") && {
+        images: [{ url: event.gradient.replace(/^url\(|\) center\/cover$/g, "") }],
+      }),
+    },
+  };
+}
 
 const faq = [
   {
@@ -70,13 +101,9 @@ export default async function EventPage({
 
   const genre = event.genre ? genreBySlug.get(event.genre) : null;
 
-  const allEvents = await getPublicEvents({ limit: 20 });
-  const related = allEvents
-    .filter(
-      (e) =>
-        e.slug !== event.slug &&
-        (e.city === event.city || e.genre === event.genre)
-    )
+  const sameCityEvents = await getPublicEvents({ limit: 6, city: event.city });
+  const related = sameCityEvents
+    .filter((e) => e.slug !== event.slug)
     .slice(0, 3);
 
   const description =
@@ -155,7 +182,7 @@ export default async function EventPage({
               <div className="grid sm:grid-cols-2 gap-3 text-sm text-text-secondary mb-9 max-w-xl">
                 <Info icon={Calendar} label={event.dateLabel} />
                 <Info icon={MapPin} label={`${event.venue}, ${event.city}`} />
-                <Info icon={Clock} label="Abertura 22h" />
+                <Info icon={Clock} label={event.dateISO ? `Abertura ${new Date(event.dateISO).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "numeric", minute: "2-digit" })}` : "Horário a confirmar"} />
                 <Info icon={Users} label="Documento original na entrada" />
               </div>
 

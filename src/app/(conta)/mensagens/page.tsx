@@ -321,7 +321,7 @@ export default function MensagensPage() {
         </div>
       ) : (
         <div className="rounded-2xl border border-white/5 bg-card overflow-hidden min-h-[500px]">
-          <div className="grid md:grid-cols-[320px_1fr] h-[600px]">
+          <div className="grid md:grid-cols-[320px_1fr] h-[calc(100vh-200px)] max-h-[700px]">
             {/* Conversation list */}
             <div className="border-r border-white/5 flex flex-col">
               <div className="p-3 border-b border-white/5">

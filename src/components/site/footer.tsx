@@ -16,8 +16,8 @@ const cols = [
     title: "Pra quem produz",
     links: [
       { label: "Cadastrar casa", href: "/parceiro" },
-      { label: "Painel admin", href: "/admin" },
-      { label: "Documentação", href: "/docs" },
+      { label: "Painel admin", href: "https://app.maisvanta.com" },
+      { label: "Documentação", href: "#" },
     ],
   },
   {

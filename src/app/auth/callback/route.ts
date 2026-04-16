@@ -18,22 +18,15 @@ export async function GET(request: Request) {
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("data_nascimento")
+          .select("data_nascimento, cidade")
           .eq("id", user.id)
           .maybeSingle();
 
-        if (!profile?.data_nascimento) {
+        if (!profile || !profile.data_nascimento) {
           return NextResponse.redirect(`${origin}/completar-perfil`);
         }
 
-        // Check if onboarding is needed (no city set)
-        const { data: fullProfile } = await supabase
-          .from("profiles")
-          .select("cidade")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (!fullProfile?.cidade) {
+        if (!profile.cidade) {
           return NextResponse.redirect(`${origin}/onboarding`);
         }
       }

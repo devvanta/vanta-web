@@ -166,7 +166,7 @@ export default function SobrePage() {
             <div>
               <span className="kicker mb-3 inline-block">onde a gente tá</span>
               <h2 className="text-3xl md:text-5xl leading-tight mb-5">
-                Comecei no Rio. <br />
+                Começou no Rio. <br />
                 <span className="text-gold">Hoje roda em 8 capitais</span>.
               </h2>
               <p className="text-text-secondary text-lg leading-relaxed">

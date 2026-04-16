@@ -57,13 +57,13 @@ function inDatePreset(iso: string | undefined, preset: DatePreset): boolean {
   return true;
 }
 
-function inPriceBand(cents: number | undefined, band: PriceBand): boolean {
+function inPriceBand(price: number | undefined, band: PriceBand): boolean {
   if (band === "all") return true;
-  if (cents === undefined) return false;
-  if (band === "free") return cents === 0;
-  if (band === "lt50") return cents > 0 && cents < 5000;
-  if (band === "50-100") return cents >= 5000 && cents <= 10000;
-  if (band === "gt100") return cents > 10000;
+  if (price === undefined) return false;
+  if (band === "free") return price === 0;
+  if (band === "lt50") return price > 0 && price < 50;
+  if (band === "50-100") return price >= 50 && price <= 100;
+  if (band === "gt100") return price > 100;
   return true;
 }
 

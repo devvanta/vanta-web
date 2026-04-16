@@ -333,7 +333,7 @@ export default function RadarPage() {
                           }
                         }}
                         className={cn(
-                          "block w-full text-left p-3 rounded-xl border flex items-start gap-3 transition-colors duration-200 cursor-pointer",
+                          "w-full text-left p-3 rounded-xl border flex items-start gap-3 transition-colors duration-200 cursor-pointer",
                           active
                             ? "bg-gold/10 border-gold/40"
                             : "bg-card border-white/5 hover-real:border-white/15"

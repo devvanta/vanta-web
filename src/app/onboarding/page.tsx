@@ -71,19 +71,24 @@ export default function OnboardingPage() {
     });
   }, []);
 
+  const [cityError, setCityError] = useState<string | null>(null);
+
   // City search with debounce
   useEffect(() => {
     if (cityQuery.length < 2) {
       setCities([]);
+      setCityError(null);
       return;
     }
 
     const timer = setTimeout(async () => {
       setCityLoading(true);
+      setCityError(null);
       try {
         const res = await fetch(
           `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(cityQuery)}&orderBy=nome`
         );
+        if (!res.ok) throw new Error("IBGE API error");
         const data: { nome: string; microrregiao?: { mesorregiao?: { UF?: { sigla?: string } } } }[] = await res.json();
         setCities(
           data.slice(0, 10).map((c) => ({
@@ -93,6 +98,7 @@ export default function OnboardingPage() {
         );
       } catch {
         setCities([]);
+        setCityError("Erro ao buscar cidades. Tente novamente.");
       }
       setCityLoading(false);
     }, 300);
@@ -202,6 +208,12 @@ export default function OnboardingPage() {
             {cityLoading && (
               <p className="text-xs text-text-muted text-center">
                 Buscando...
+              </p>
+            )}
+
+            {cityError && (
+              <p className="text-xs text-error text-center">
+                {cityError}
               </p>
             )}
 
@@ -343,7 +355,14 @@ export default function OnboardingPage() {
                 Agora não
               </button>
               <Button
-                onClick={() => {
+                onClick={async () => {
+                  const supabase = createClient();
+                  await supabase.rpc("user_profile_update", {
+                    p_fields: {
+                      mais_vanta_interesse: true,
+                      updated_at: new Date().toISOString(),
+                    },
+                  });
                   setStep("welcome");
                 }}
                 className="flex-1"

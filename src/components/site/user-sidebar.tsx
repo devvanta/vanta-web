@@ -5,7 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Bell,
   Crown,
-  LayoutDashboard,
   LogOut,
   MessageCircle,
   Settings,
@@ -73,18 +72,6 @@ export function UserSidebar({ user }: { user: User }) {
 
         {/* Nav */}
         <nav className="p-2">
-          <Link
-            href="/perfil"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-200",
-              pathname === "/perfil"
-                ? "bg-gold/10 text-gold"
-                : "text-text-secondary hover-real:bg-elevated hover-real:text-text-primary"
-            )}
-          >
-            <LayoutDashboard size={14} className="shrink-0" />
-            <span>Início</span>
-          </Link>
           {items.map((item) => {
             const active = pathname.startsWith(item.href);
             const Icon = item.icon;

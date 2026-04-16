@@ -175,13 +175,13 @@ function EventsShowcase({ events }: { events: EventCardData[] }) {
               Novos eventos na sua cidade.
             </h2>
           </div>
-          <a
+          <Link
             href="/eventos"
             className="hidden sm:inline-flex items-center gap-2 text-sm text-text-secondary hover-real:text-gold transition-colors duration-200"
           >
             Ver todos
             <ArrowRight size={14} />
-          </a>
+          </Link>
         </div>
         {events.length > 0 ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
