@@ -4,14 +4,12 @@ import {
   Bell,
   Crown,
   Gift,
-  Heart,
   Home as HomeIcon,
   Map as MapIcon,
   MapPin,
   MessageCircle,
   Radio,
   Search,
-  Sparkles,
   Ticket,
   User,
   Users,
@@ -279,79 +277,6 @@ function AppTabs() {
               </p>
             </Link>
           ))}
-        </div>
-      </Container>
-    </section>
-  );
-}
-
-function VantaIndica() {
-  const cards = [
-    {
-      who: "Ana",
-      handle: "@anapraia",
-      avatar: "linear-gradient(135deg, rgba(255,211,0,0.3), #080604)",
-      action: "indicou",
-      target: "Sunset Privilege",
-      when: "há 2h",
-    },
-    {
-      who: "7 amigos",
-      handle: "grupo",
-      avatar: "linear-gradient(220deg, rgba(255,211,0,0.18), #080604)",
-      action: "vão em",
-      target: "Techno Underground",
-      when: "quinta",
-    },
-  ];
-
-  return (
-    <section className="py-20 md:py-28">
-      <Container size="lg">
-        <div className="grid md:grid-cols-[1fr_1.2fr] gap-12 items-center">
-          <div>
-            <span className="kicker mb-3 inline-block">vanta indica</span>
-            <h2 className="text-3xl md:text-5xl leading-tight mb-5">
-              Onde os seus <span className="text-gold">amigos</span> estão indo.
-            </h2>
-            <p className="text-text-secondary text-lg leading-relaxed mb-7">
-              Veja quem está indo em cada rolê, quem indicou o quê e para onde o
-              seu grupo tá puxando a semana. A descoberta social mudou.
-            </p>
-            <div className="flex items-center gap-2 text-sm text-text-muted">
-              <Sparkles size={14} className="text-gold" />
-              <span>Indicação ativa, cards no feed, notificação sutil</span>
-            </div>
-          </div>
-
-          <ul className="space-y-3">
-            {cards.map((c) => (
-              <li
-                key={c.target}
-                className="flex items-center gap-4 p-5 rounded-2xl bg-card border border-white/5 hover-real:border-white/15 transition-colors duration-200"
-              >
-                <div
-                  className="h-12 w-12 rounded-full border border-white/10 shrink-0"
-                  style={{ background: c.avatar }}
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm leading-tight">
-                    <span className="font-semibold">{c.who}</span>{" "}
-                    <span className="text-text-muted">{c.action}</span>{" "}
-                    <span className="font-semibold text-gold">{c.target}</span>
-                  </p>
-                  <p className="text-xs text-text-muted mt-1">
-                    {c.handle} · {c.when}
-                  </p>
-                </div>
-                <Heart
-                  size={16}
-                  className="text-text-muted shrink-0"
-                  strokeWidth={2}
-                />
-              </li>
-            ))}
-          </ul>
         </div>
       </Container>
     </section>

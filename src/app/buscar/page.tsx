@@ -101,7 +101,7 @@ export default function BuscarPage() {
           kind: "city",
           label: c.name,
           meta: "Cidade",
-          href: `/eventos?cidade=${c.slug}`,
+          href: `/eventos?cidade=${encodeURIComponent(c.name)}`,
         });
       }
     });
