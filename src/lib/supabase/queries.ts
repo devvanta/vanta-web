@@ -96,7 +96,8 @@ function getEventStatus(
 
   if (start <= now && (!end || end >= now)) return "happening";
 
-  // Check low stock
+  // Display-only badge: "lowStock" / "endingSoon". These are visual hints, not access control.
+  // Actual stock enforcement is via processar_compra_checkout RPC (atomic decrement).
   if (row.lotes) {
     let totalRemaining = 0;
     let totalCapacity = 0;

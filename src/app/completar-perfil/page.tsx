@@ -19,6 +19,7 @@ function isValidDate(val: string): boolean {
   );
 }
 
+// UX-only: prevents underage users from wasting time. Server enforces via RPC.
 function isAdult(val: string, minAge = 16): boolean {
   const [d, m, y] = val.split("/").map(Number);
   const birth = new Date(y, m - 1, d);

@@ -226,6 +226,9 @@ export default function CheckoutPage() {
     [quantidades]
   );
 
+  // Display-only price preview using server-validated data.
+  // cupomAplicado comes from validate-cupom edge function (server-validated).
+  // Actual total is computed server-side by create-ticket-checkout (paid) or processar_compra_checkout (free).
   const subtotal = useMemo(() => {
     let total = 0;
     for (const v of variacoes) {
@@ -270,7 +273,8 @@ export default function CheckoutPage() {
     });
   }, [cupomCodigo, evento]);
 
-  // Save CPF with checkdigit validation
+  // UX-only CPF format validation (modulo-11 checksum). Backend also validates via RPC.
+  // This prevents the user from submitting obviously invalid CPFs, saving a round-trip.
   const saveCpf = useCallback(async () => {
     const digits = cpf.replace(/\D/g, "");
     if (digits.length !== 11) return;
@@ -314,21 +318,8 @@ export default function CheckoutPage() {
   const handleSubmit = useCallback(async () => {
     if (submitLock.current || totalItems === 0 || !evento || !lote) return;
 
-    // Age validation
-    if (evento.classificacao_etaria && userDobRef.current) {
-      const minAge = evento.classificacao_etaria === "18+" ? 18 : evento.classificacao_etaria === "16+" ? 16 : 0;
-      if (minAge > 0) {
-        const birth = new Date(userDobRef.current);
-        const today = new Date();
-        let age = today.getFullYear() - birth.getFullYear();
-        const monthDiff = today.getMonth() - birth.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age--;
-        if (age < minAge) {
-          setError(`Este evento é restrito para maiores de ${minAge} anos.`);
-          return;
-        }
-      }
-    }
+    // Age validation enforced server-side by create-ticket-checkout edge function
+    // and processar_compra_checkout RPC. No frontend duplication needed.
 
     submitLock.current = true;
     setSubmitting(true);

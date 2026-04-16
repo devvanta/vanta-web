@@ -140,6 +140,7 @@ export default function OnboardingPage() {
       setStep("cidade");
       return;
     }
+    // UX preference only — controls onboarding screen visibility, not access to features
     localStorage.setItem("vanta_onboarding_done", "1");
     window.location.href = "/";
   }, [selectedCity]);
