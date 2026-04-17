@@ -19,6 +19,8 @@ import {
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { JsonLd } from "@/components/site/json-ld";
+import { faqSchema, serviceSchema } from "@/lib/schema";
 
 const perks = [
   {
@@ -141,6 +143,18 @@ export default function MaisVantaPage() {
 
   return (
     <>
+      <JsonLd
+        data={[
+          serviceSchema({
+            name: "MAIS VANTA",
+            description:
+              "Clube de fidelidade da VANTA. Cortesias, entrada gratuita, fila exclusiva, passaporte regional e acompanhantes com benefício. Entrada por aplicação ou convite, gratuito pro membro.",
+            serviceType: "Loyalty Program",
+            path: "/mais-vanta",
+          }),
+          faqSchema(faq),
+        ]}
+      />
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-white/5">
         <div

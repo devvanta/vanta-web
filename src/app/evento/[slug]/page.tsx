@@ -26,6 +26,8 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { genreBySlug } from "@/lib/genres";
 import { cn } from "@/lib/utils";
+import { JsonLd } from "@/components/site/json-ld";
+import { breadcrumbSchema, eventSchema, faqSchema } from "@/lib/schema";
 
 export async function generateMetadata({
   params,
@@ -114,6 +116,17 @@ export default async function EventPage({
 
   return (
     <>
+      <JsonLd
+        data={[
+          eventSchema(event),
+          faqSchema(faq),
+          breadcrumbSchema([
+            { name: "Início", path: "/" },
+            { name: "Eventos", path: "/eventos" },
+            { name: event.name, path: `/evento/${event.slug}` },
+          ]),
+        ]}
+      />
       {/* Hero */}
       <div className="relative border-b border-white/5 overflow-hidden">
         <div

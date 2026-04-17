@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import { Playfair_Display, Poppins } from "next/font/google";
 import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
+import { JsonLd } from "@/components/site/json-ld";
+import {
+  organizationSchema,
+  webApplicationSchema,
+  websiteSchema,
+} from "@/lib/schema";
 import "./globals.css";
 
 const poppins = Poppins({
@@ -40,6 +46,13 @@ export default function RootLayout({
       className={`${poppins.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-void text-text-primary">
+        <JsonLd
+          data={[
+            organizationSchema(),
+            websiteSchema(),
+            webApplicationSchema(),
+          ]}
+        />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
