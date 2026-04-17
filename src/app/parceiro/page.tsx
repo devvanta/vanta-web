@@ -457,10 +457,15 @@ export default function ParceiroPage() {
                       required
                     />
                   </div>
+                  {error && (
+                    <div className="rounded-xl border border-error/30 bg-error/10 p-3 text-xs text-error">
+                      {error}
+                    </div>
+                  )}
                   <div className="flex items-center gap-3 pt-2">
-                    <Button type="submit" size="lg">
-                      Solicitar onboarding
-                      <ArrowRight size={16} />
+                    <Button type="submit" size="lg" disabled={loading}>
+                      {loading ? "Enviando..." : "Solicitar onboarding"}
+                      {!loading && <ArrowRight size={16} />}
                     </Button>
                     <p className="text-xs text-text-muted">
                       Retorno em 2 dias úteis

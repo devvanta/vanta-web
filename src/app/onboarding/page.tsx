@@ -108,8 +108,9 @@ export default function OnboardingPage() {
 
   const saveCity = useCallback(async (city: CityResult) => {
     setSaving(true);
+    setCityError(null);
     const supabase = createClient();
-    await supabase.rpc("user_profile_update", {
+    const { error } = await supabase.rpc("user_profile_update", {
       p_fields: {
         cidade: city.nome,
         estado: city.uf,
@@ -117,6 +118,10 @@ export default function OnboardingPage() {
       },
     });
     setSaving(false);
+    if (error) {
+      setCityError("Erro ao salvar cidade. Tente novamente.");
+      return;
+    }
     setStep("interesses");
   }, []);
 
@@ -124,26 +129,27 @@ export default function OnboardingPage() {
     if (selectedInterests.length > 0) {
       setSaving(true);
       const supabase = createClient();
-      await supabase.rpc("user_profile_update", {
+      const { error } = await supabase.rpc("user_profile_update", {
         p_fields: {
           interesses: selectedInterests,
           updated_at: new Date().toISOString(),
         },
       });
       setSaving(false);
+      if (error) {
+        // Non-blocking: interests are optional, proceed anyway
+        console.error("Failed to save interests:", error);
+      }
     }
     setStep("maisvanta");
   }, [selectedInterests]);
 
   const finish = useCallback(() => {
-    if (!selectedCity) {
-      setStep("cidade");
-      return;
-    }
-    // UX preference only — controls onboarding screen visibility, not access to features
+    // UX preference only — controls onboarding screen visibility, not access to features.
+    // If city was somehow skipped, the (conta) layout server-side guard will redirect back.
     localStorage.setItem("vanta_onboarding_done", "1");
     window.location.href = "/";
-  }, [selectedCity]);
+  }, []);
 
   return (
     <Container size="sm" className="py-16 md:py-24">
@@ -199,6 +205,15 @@ export default function OnboardingPage() {
                 onChange={(e) => {
                   setCityQuery(e.target.value);
                   setSelectedCity(null);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && cities.length > 0 && !selectedCity) {
+                    e.preventDefault();
+                    const c = cities[0];
+                    setSelectedCity(c);
+                    setCityQuery(`${c.nome} — ${c.uf}`);
+                    setCities([]);
+                  }
                 }}
                 placeholder="Digite sua cidade..."
                 autoFocus
