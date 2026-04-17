@@ -135,9 +135,16 @@ export function useEvents() {
       .gte("data_fim", new Date().toISOString())
       .order("data_inicio", { ascending: true })
       .then(({ data, error }) => {
+        if (error) {
+          console.error("[useEvents] Supabase query failed:", error.message, error.code, error.details);
+        }
         if (!error && data) {
           setEvents((data as unknown as EventoRow[]).map(toEventCard));
         }
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("[useEvents] Unexpected error:", err);
         setLoading(false);
       });
   }, []);
