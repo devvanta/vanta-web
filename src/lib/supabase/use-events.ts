@@ -142,10 +142,6 @@ export function useEvents() {
           setEvents((data as unknown as EventoRow[]).map(toEventCard));
         }
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("[useEvents] Unexpected error:", err);
-        setLoading(false);
       });
   }, []);
 
