@@ -336,30 +336,36 @@ export default function CheckoutPage() {
       }));
 
     if (total === 0) {
-      // Free checkout — call RPC directly
-      for (const item of itens) {
+      // Fix F2.1: RPC atomica. Se qualquer variacao falhar (estoque, meia-entrada),
+      // nenhum ticket e criado. Substitui loop que deixava tickets orfaos em erro parcial.
+      const itensPayload = itens.map((item) => {
         const variacao = variacoes.find((v) => v.id === item.variacao_id)!;
-        const { data, error: rpcError } = await supabase.rpc(
-          "processar_compra_checkout",
-          {
-            p_evento_id: evento.id,
-            p_lote_id: lote.id,
-            p_variacao_id: item.variacao_id,
-            p_email: userEmail || "",
-            p_valor_unit: variacao.valor,
-            p_quantidade: item.quantidade,
-            p_comprador_id: userId || "",
-            p_ref_code: "",
-          }
-        );
+        const area = variacao.area === "OUTRO" ? variacao.area_custom ?? "Outro" : variacao.area;
+        return {
+          variacao_id: item.variacao_id,
+          quantidade: item.quantidade,
+          valor_unit: variacao.valor,
+          variacao_label: area,
+        };
+      });
 
-        const result = data as { ok?: boolean; erro?: string } | null;
-        if (rpcError || (result && !result.ok)) {
-          setError(result?.erro || "Erro ao processar. Tente novamente.");
-          setSubmitting(false);
-          submitLock.current = false;
-          return;
-        }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rpcAny = supabase.rpc as any;
+      const { data: batch, error: batchError } = await rpcAny("processar_compra_free_batch", {
+        p_evento_id: evento.id,
+        p_lote_id: lote.id,
+        p_email: userEmail || "",
+        p_itens: itensPayload,
+        p_comprador_id: userId || "",
+        p_ref_code: "",
+      });
+
+      const result = batch as { ok?: boolean; erro?: string } | null;
+      if (batchError || !result?.ok) {
+        setError(result?.erro || "Erro ao processar. Nenhum ingresso foi criado.");
+        setSubmitting(false);
+        submitLock.current = false;
+        return;
       }
 
       // Success — redirect to success page

@@ -50,20 +50,17 @@ function EntrarContent() {
     setLoading(false);
 
     if (signInError) {
-      if (signInError.message.includes("Invalid login")) {
-        setError("E-mail ou senha incorretos.");
-      } else if (signInError.message.includes("Email not confirmed")) {
-        setError("E-mail não confirmado. Verifique sua caixa de entrada.");
-      } else {
-        setError("Não foi possível entrar. Tente novamente.");
-      }
+      // Fix M7: mensagem genérica pra evitar email enumeration.
+      // Antes mensagens diferentes revelavam se email existia no sistema.
+      setError("E-mail ou senha incorretos. Se não confirmou seu e-mail, verifique sua caixa.");
       return;
     }
 
-    // Redirect to ?next param or home (validate to prevent open redirect)
+    // Redirect to ?next param or home. Whitelist estrita pra previnir open redirect:
+    // bloqueia //evil.com, /\evil.com, /..//evil, javascript:, data:, etc.
     const next = searchParams.get("next");
-    const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/";
-    window.location.href = safeNext;
+    const isSafe = !!next && /^\/[A-Za-z0-9][A-Za-z0-9/_\-?&=.%]*$/.test(next);
+    window.location.href = isSafe ? next! : "/";
   }
 
   return (

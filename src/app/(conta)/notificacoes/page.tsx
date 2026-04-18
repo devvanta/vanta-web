@@ -263,7 +263,11 @@ export default function NotificacoesPage() {
                 <div
                   onClick={() => {
                     if (!n.lida) markRead(n.id);
-                    if (n.link) window.location.href = n.link;
+                    // Fix H6: sanitize link (javascript:/data: bloqueados).
+                    // Aceita apenas paths relativos começando com /.
+                    if (n.link && /^\/[A-Za-z0-9/_\-?&=.%]*$/.test(n.link)) {
+                      window.location.href = n.link;
+                    }
                   }}
                   className={cn(
                     "flex items-start gap-4 p-5 transition-colors duration-200 cursor-pointer",

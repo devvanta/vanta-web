@@ -35,12 +35,24 @@ export default function ConfiguracoesPage() {
     } = await supabase.auth.getUser();
 
     if (user) {
-      const { error: rpcError } = await supabase.rpc("user_profile_update", {
-        p_fields: {
-          excluido: true,
-          excluido_em: new Date().toISOString(),
-        },
-      });
+      // Fix LGPD #E13: limpar storage (avatars + profile-albums) antes da anonimização
+      const buckets = ["avatars", "profile-albums"];
+      for (const bucket of buckets) {
+        try {
+          const { data: files } = await supabase.storage.from(bucket).list(user.id);
+          if (files && files.length > 0) {
+            await supabase.storage
+              .from(bucket)
+              .remove(files.map((f) => `${user.id}/${f.name}`));
+          }
+        } catch (e) {
+          console.warn(`[configuracoes] storage cleanup ${bucket}:`, e);
+        }
+      }
+
+      // RPC anonimiza conta LGPD-compliant: limpa friendships, tickets, notifications,
+      // analytics_events, consents, etc. Troca apenas excluido=true deixava dados pra trás.
+      const { error: rpcError } = await supabase.rpc("anonimizar_conta");
 
       if (rpcError) {
         setDeleting(false);
