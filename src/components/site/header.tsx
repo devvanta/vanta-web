@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Shield } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/site/logo";
@@ -25,6 +25,26 @@ export async function Header() {
     user?.email?.split("@")[0];
 
   const avatarUrl = user?.user_metadata?.avatar_url;
+
+  // Detecta se tem acesso ao Painel Admin (app.maisvanta.com/admin).
+  // Mostra botão pra: masteradm OU qualquer cargo RBAC ativo em comunidade.
+  let hasAdminAccess = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (profile?.role === "vanta_masteradm") {
+      hasAdminAccess = true;
+    } else {
+      const { count } = await supabase
+        .from("atribuicoes_rbac")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      hasAdminAccess = (count ?? 0) > 0;
+    }
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-void/80 backdrop-blur-md">
@@ -53,29 +73,40 @@ export async function Header() {
               <Search size={14} />
             </Link>
             {user ? (
-              <Link
-                href="/perfil"
-                className="flex items-center gap-2.5 rounded-full border border-white/10 pl-1 pr-3.5 py-1 hover-real:border-white/20 transition-colors duration-200"
-              >
-                {avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt=""
-                    className="h-7 w-7 rounded-full object-cover"
-                  />
-                ) : (
-                  <div
-                    className="h-7 w-7 rounded-full"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, rgba(255,211,0,0.35), #080604)",
-                    }}
-                  />
+              <>
+                {hasAdminAccess && (
+                  <a
+                    href="https://app.maisvanta.com/admin"
+                    className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-[#FFD300]/30 bg-[#FFD300]/5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[#FFD300] hover-real:bg-[#FFD300]/10 transition-colors duration-200"
+                  >
+                    <Shield size={12} />
+                    Painel
+                  </a>
                 )}
-                <span className="text-sm text-text-secondary hidden sm:inline">
-                  {displayName}
-                </span>
-              </Link>
+                <Link
+                  href="/perfil"
+                  className="flex items-center gap-2.5 rounded-full border border-white/10 pl-1 pr-3.5 py-1 hover-real:border-white/20 transition-colors duration-200"
+                >
+                  {avatarUrl ? (
+                    <img
+                      src={avatarUrl}
+                      alt=""
+                      className="h-7 w-7 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="h-7 w-7 rounded-full"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,211,0,0.35), #080604)",
+                      }}
+                    />
+                  )}
+                  <span className="text-sm text-text-secondary hidden sm:inline">
+                    {displayName}
+                  </span>
+                </Link>
+              </>
             ) : (
               <>
                 <Link
