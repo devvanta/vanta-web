@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { UserSidebar } from "@/components/site/user-sidebar";
 import { createClient } from "@/lib/supabase/server";
+import { getOwnProfile } from "@/lib/supabase/profile";
 
 export default async function ContaLayout({
   children,
@@ -17,12 +18,12 @@ export default async function ContaLayout({
     redirect("/entrar");
   }
 
-  // Check profile completion gate (same as app's CompletarPerfilSocial)
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("data_nascimento, cidade")
-    .eq("id", user.id)
-    .maybeSingle();
+  // Profile completion gate (espelha CompletarPerfilSocial do app).
+  // Usa RPC get_own_profile (SECURITY DEFINER) em vez de SELECT direto em
+  // profiles — data_nascimento tem REVOKE SELECT pra authenticated (LGPD
+  // 2026-04-20), SELECT direto retornaria 42501 e profile seria null,
+  // gerando redirect infinito pro /completar-perfil.
+  const profile = await getOwnProfile(supabase);
 
   if (!profile?.data_nascimento) {
     redirect("/completar-perfil");

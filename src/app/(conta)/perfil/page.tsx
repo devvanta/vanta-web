@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { getOwnProfile } from "@/lib/supabase/profile";
 
 const defaultPrivacyFields = [
   { key: "nome", label: "Nome", public: true },
@@ -55,11 +56,9 @@ export default function PerfilPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: prof } = await supabase
-        .from("profiles")
-        .select("nome, instagram, cidade, avatar_url, created_at, privacidade")
-        .eq("id", user.id)
-        .maybeSingle();
+      // RPC get_own_profile — bypassa REVOKE em `privacidade` (LGPD 2026-04-20).
+      // SELECT direto incluindo `privacidade` retornaria 42501 e profile seria null.
+      const prof = await getOwnProfile(supabase);
 
       if (prof) {
         setProfile({
@@ -67,10 +66,10 @@ export default function PerfilPage() {
           instagram: prof.instagram,
           cidade: prof.cidade,
           avatar_url: prof.avatar_url,
-          created_at: prof.created_at,
-          privacy_settings: (prof.privacidade as Record<string, boolean>) ?? null,
+          created_at: (prof as unknown as { created_at: string | null }).created_at ?? null,
+          privacy_settings: prof.privacidade ?? null,
         });
-        const ps = ((prof.privacidade as Record<string, boolean>) || {});
+        const ps = prof.privacidade ?? {};
         setFields(defaultPrivacyFields.map(f => ({
           ...f,
           public: ps[f.key] !== undefined ? ps[f.key] : f.public,

@@ -19,6 +19,7 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { getOwnProfile } from "@/lib/supabase/profile";
 
 type Variacao = {
   id: string;
@@ -125,18 +126,16 @@ export default function CheckoutPage() {
         setUserId(user.id);
         setUserEmail(user.email ?? null);
 
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("cpf, telefone_ddd, telefone_numero, data_nascimento")
-          .eq("id", user.id)
-          .maybeSingle();
+        // RPC get_own_profile bypassa column-grants em cpf, telefone_*, data_nascimento
+        // (todas REVOKED pra authenticated desde LGPD 2026-04-20). SELECT direto
+        // retornaria 42501 e o user cairia em needsCpf/needsTelefone permanente.
+        const profile = await getOwnProfile(supabase);
 
         if (profile) {
           setNeedsCpf(!profile.cpf);
           setNeedsTelefone(!profile.telefone_ddd || !profile.telefone_numero);
-          // Store DOB for age check later
           if (profile.data_nascimento) {
-            userDobRef.current = profile.data_nascimento as string;
+            userDobRef.current = profile.data_nascimento;
           }
         }
       }

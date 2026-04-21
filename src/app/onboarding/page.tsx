@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/site/logo";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { searchCities } from "@/lib/br-cities-service";
 
 const INTERESTS = [
   "Funk",
@@ -81,21 +82,14 @@ export default function OnboardingPage() {
       return;
     }
 
+    // Busca via lista bundled (5571 cidades BR). Zero dependência de rede —
+    // antes fetch IBGE direto sem timeout/fallback, user travava quando API caía.
     const timer = setTimeout(async () => {
       setCityLoading(true);
       setCityError(null);
       try {
-        const res = await fetch(
-          `https://servicodados.ibge.gov.br/api/v1/localidades/municipios?nome=${encodeURIComponent(cityQuery)}&orderBy=nome`
-        );
-        if (!res.ok) throw new Error("IBGE API error");
-        const data: { nome: string; microrregiao?: { mesorregiao?: { UF?: { sigla?: string } } } }[] = await res.json();
-        setCities(
-          data.slice(0, 10).map((c) => ({
-            nome: c.nome,
-            uf: c.microrregiao?.mesorregiao?.UF?.sigla ?? "",
-          }))
-        );
+        const results = await searchCities(cityQuery, 10);
+        setCities(results);
       } catch {
         setCities([]);
         setCityError("Erro ao buscar cidades. Tente novamente.");

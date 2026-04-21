@@ -28,14 +28,15 @@ export async function Header() {
 
   // Detecta se tem acesso ao Painel Admin (app.maisvanta.com/admin).
   // Mostra botão pra: masteradm OU qualquer cargo RBAC ativo em comunidade.
+  //
+  // Uso da RPC is_masteradm() (SECURITY DEFINER) em vez de SELECT direto em
+  // profiles.role — coluna `role` tem REVOKE SELECT pra authenticated (LGPD
+  // 2026-04-20), SELECT direto retornaria 42501 e hasAdminAccess ficaria false
+  // pra masteradm (esconderia o menu Admin indevidamente).
   let hasAdminAccess = false;
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (profile?.role === "vanta_masteradm") {
+    const { data: isMaster } = await supabase.rpc("is_masteradm");
+    if (isMaster === true) {
       hasAdminAccess = true;
     } else {
       const { count } = await supabase

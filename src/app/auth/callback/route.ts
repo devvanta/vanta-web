@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getOwnProfile } from "@/lib/supabase/profile";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -10,17 +11,14 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Check if profile needs completion (OAuth users without DOB)
+      // Check if profile needs completion (OAuth users without DOB).
+      // Usa RPC get_own_profile (bypassa REVOKE em data_nascimento).
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
       if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("data_nascimento, cidade")
-          .eq("id", user.id)
-          .maybeSingle();
+        const profile = await getOwnProfile(supabase);
 
         if (!profile || !profile.data_nascimento) {
           return NextResponse.redirect(`${origin}/completar-perfil`);
