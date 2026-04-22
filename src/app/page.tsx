@@ -20,6 +20,7 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { EventCard, type EventCardData } from "@/components/site/event-card";
 import { getPublicEvents } from "@/lib/supabase/queries";
+import { VantaIndicaSection } from "@/components/site/vanta-indica-section";
 
 // Fix #177 H1 (2026-04-21): ISR — home pública regenera a cada 60s.
 // Reduz TTFB e economiza reads no Supabase. Visitantes anônimos pegam
@@ -33,6 +34,7 @@ export default async function Home() {
     <>
       <Hero events={events} />
       <EventsShowcase events={events} />
+      <VantaIndicaSection />
       <MaisVantaSection />
       <Notifications />
       <ForProducers />
