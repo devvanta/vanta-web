@@ -288,7 +288,13 @@ export default function CheckoutPage() {
 
   // UX-only CPF format validation (modulo-11 checksum). Backend also validates via RPC.
   // This prevents the user from submitting obviously invalid CPFs, saving a round-trip.
+  // Fix #202 L4 (2026-04-22): valida sucesso da RPC antes de marcar como
+  // resolvido. Antes, se a RPC falhasse (rede, CPF duplicado no DB, validation
+  // server-side via trg_validate_cpf_telefone), o user pensava que salvou mas
+  // seguia com needsCpf=true silenciosamente.
+  const [savingCpf, setSavingCpf] = useState(false);
   const saveCpf = useCallback(async () => {
+    if (savingCpf) return;
     const digits = cpf.replace(/\D/g, "");
     if (digits.length !== 11) return;
     // Reject all-same-digit CPFs
@@ -306,26 +312,59 @@ export default function CheckoutPage() {
     if (Number(digits[10]) !== d2) { setError("CPF inválido."); return; }
 
     setError(null);
-    const supabase = createClient();
-    await supabase.rpc("user_profile_update", {
-      p_fields: { cpf: digits },
-    });
-    setNeedsCpf(false);
-  }, [cpf]);
+    setSavingCpf(true);
+    try {
+      const supabase = createClient();
+      const { error: rpcErr } = await supabase.rpc("user_profile_update", {
+        p_fields: { cpf: digits },
+      });
+      if (rpcErr) {
+        // 23505 = unique_violation (CPF duplicado em outra conta)
+        // 23514 = check_violation (trg_validate_cpf_telefone rejeitou)
+        if (rpcErr.code === "23505") {
+          setError("Este CPF já está cadastrado em outra conta.");
+        } else if (rpcErr.code === "23514") {
+          setError("CPF inválido. Verifique os dígitos.");
+        } else {
+          setError("Erro ao salvar CPF. Tente novamente.");
+        }
+        return;
+      }
+      setNeedsCpf(false);
+    } finally {
+      setSavingCpf(false);
+    }
+  }, [cpf, savingCpf]);
 
-  // Save telefone
+  // Save telefone — mesmo padrão do CPF: guard contra double-submit + trata erro.
+  const [savingTelefone, setSavingTelefone] = useState(false);
   const saveTelefone = useCallback(async () => {
+    if (savingTelefone) return;
     if (!ddd.trim() || !telefone.trim()) return;
 
-    const supabase = createClient();
-    await supabase.rpc("user_profile_update", {
-      p_fields: {
-        telefone_ddd: ddd.replace(/\D/g, ""),
-        telefone_numero: telefone.replace(/\D/g, ""),
-      },
-    });
-    setNeedsTelefone(false);
-  }, [ddd, telefone]);
+    setError(null);
+    setSavingTelefone(true);
+    try {
+      const supabase = createClient();
+      const { error: rpcErr } = await supabase.rpc("user_profile_update", {
+        p_fields: {
+          telefone_ddd: ddd.replace(/\D/g, ""),
+          telefone_numero: telefone.replace(/\D/g, ""),
+        },
+      });
+      if (rpcErr) {
+        if (rpcErr.code === "23514") {
+          setError("Telefone inválido. DDD deve ser 11-99 e número 8-9 dígitos.");
+        } else {
+          setError("Erro ao salvar telefone. Tente novamente.");
+        }
+        return;
+      }
+      setNeedsTelefone(false);
+    } finally {
+      setSavingTelefone(false);
+    }
+  }, [ddd, telefone, savingTelefone]);
 
   // Submit checkout
   const handleSubmit = useCallback(async () => {
@@ -748,10 +787,15 @@ export default function CheckoutPage() {
             />
             <button
               onClick={saveCpf}
-              disabled={cpf.replace(/\D/g, "").length !== 11}
-              className="px-5 rounded-xl bg-gold text-black text-sm font-bold uppercase tracking-widest hover-real:brightness-110 transition-all cursor-pointer disabled:opacity-40"
+              disabled={cpf.replace(/\D/g, "").length !== 11 || savingCpf}
+              className={cn(
+                "px-5 rounded-xl bg-gold text-black text-sm font-bold uppercase tracking-widest hover-real:brightness-110 transition-all disabled:opacity-40",
+                savingCpf || cpf.replace(/\D/g, "").length !== 11
+                  ? "cursor-not-allowed"
+                  : "cursor-pointer",
+              )}
             >
-              Salvar
+              {savingCpf ? "Salvando..." : "Salvar"}
             </button>
           </div>
         </div>
@@ -782,10 +826,15 @@ export default function CheckoutPage() {
             />
             <button
               onClick={saveTelefone}
-              disabled={!ddd.trim() || !telefone.trim()}
-              className="px-5 rounded-xl bg-gold text-black text-sm font-bold uppercase tracking-widest hover-real:brightness-110 transition-all cursor-pointer disabled:opacity-40"
+              disabled={!ddd.trim() || !telefone.trim() || savingTelefone}
+              className={cn(
+                "px-5 rounded-xl bg-gold text-black text-sm font-bold uppercase tracking-widest hover-real:brightness-110 transition-all disabled:opacity-40",
+                savingTelefone || !ddd.trim() || !telefone.trim()
+                  ? "cursor-not-allowed"
+                  : "cursor-pointer",
+              )}
             >
-              Salvar
+              {savingTelefone ? "Salvando..." : "Salvar"}
             </button>
           </div>
         </div>
