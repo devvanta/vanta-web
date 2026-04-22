@@ -23,11 +23,16 @@ import {
   getPublicEvents,
   type LoteWithVariacoes,
 } from "@/lib/supabase/queries";
-import { createClient } from "@/lib/supabase/server";
 import { genreBySlug } from "@/lib/genres";
 import { cn } from "@/lib/utils";
 import { JsonLd } from "@/components/site/json-ld";
 import { breadcrumbSchema, eventSchema, faqSchema } from "@/lib/schema";
+import { CheckoutCtaButton } from "@/components/site/checkout-cta-button";
+
+// Fix #177 H1 (2026-04-21): ISR — regenera a cada 60s em background.
+// Auth check (antes em Server Component) foi movido pra <CheckoutCtaButton>
+// Client Component. Permite cache compartilhado entre requests.
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,
@@ -100,15 +105,11 @@ export default async function EventPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const [event, eventoId, supabase] = await Promise.all([
+  const [event, eventoId] = await Promise.all([
     getEventBySlug(slug),
     getEventIdBySlug(slug),
-    createClient(),
   ]);
   if (!event) notFound();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  const isLoggedIn = !!user;
 
   const lotes = eventoId ? await getEventLotes(eventoId) : [];
   const loteAtivo = lotes.find((l) => l.ativo) ?? lotes[lotes.length - 1] ?? null;
@@ -462,15 +463,7 @@ export default async function EventPage({
                 )}
 
                 <div className="mt-6 pt-6 border-t border-white/5">
-                  {isLoggedIn ? (
-                    <Button href={`/checkout/${slug}`} className="w-full" size="lg">
-                      Garantir ingresso
-                    </Button>
-                  ) : (
-                    <Button href={`/entrar?next=/checkout/${slug}`} className="w-full" size="lg">
-                      Entrar pra comprar
-                    </Button>
-                  )}
+                  <CheckoutCtaButton slug={slug} />
                   <p className="text-xs text-text-muted text-center mt-3">
                     Pagamento seguro. Ingresso entra direto na sua carteira.
                   </p>

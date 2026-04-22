@@ -4,18 +4,12 @@ Itens descobertos durante fix #177 que precisam de decisão.
 
 ---
 
-## 2026-04-21 — ISR em `/evento/[slug]`
+## 2026-04-21 — ISR em `/evento/[slug]` — RESOLVIDO
 
-**Contexto (Fix #177 H1):** `/eventos` e `/` ganharam `export const revalidate = 60` pra cachear via ISR. Mas `/evento/[slug]` tem `supabase.auth.getUser()` dentro do Server Component pra mudar CTA (Comprar vs Entrar pra comprar), o que força dynamic rendering e ignora ISR.
+**Status:** ✅ Resolvido em 2026-04-22 (opção 1 aplicada).
 
-**Opções:**
+**Fix:** Extraído `<CheckoutCtaButton slug={slug} />` em Client Component (`src/components/site/checkout-cta-button.tsx`). Server Component não chama mais `supabase.auth.getUser()`. Adicionado `export const revalidate = 60`. Landing agora 100% ISR.
 
-1. **Refactor:** mover o check de auth pra Client Component pequeno. Landing principal fica 100% ISR (cache 60s), botão de CTA hidrata dinamicamente baseado em cookie.
-2. **Dual rendering:** Next.js 16 permite `generateStaticParams` + `revalidate` + `dynamicParams=true`. Páginas de eventos populares pré-geradas no build, resto ISR on-demand.
-3. **Aceitar dynamic:** deixa como tá — cada request refaz fetch. Performance pior mas simples.
-
-**Recomendação Claude:** opção 1 é o certo pra SEO (landing de evento é a URL compartilhada mais comum). Custo: ~2h de refactor.
-
-**Aguardando decisão Dan.**
+**Verificado:** tsc 0 erros. Botão usa `onAuthStateChange` pra reagir a login/logout em tempo real sem reload.
 
 ---
