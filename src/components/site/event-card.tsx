@@ -1,6 +1,16 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Crown } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+/**
+ * Extrai URL de uma string gradient. Retorna null se for gradient CSS puro.
+ * `url(https://foo.jpg) center/cover` → `https://foo.jpg`
+ */
+function extractImageUrl(gradient: string): string | null {
+  const match = gradient.match(/^url\((["']?)(.+?)\1\)/);
+  return match ? match[2] : null;
+}
 
 export type EventStatus = "happening" | "endingSoon" | "lowStock";
 
@@ -49,6 +59,10 @@ const statusStyles: Record<
 
 export function EventCard({ event }: { event: EventCardData }) {
   const status = event.status ? statusStyles[event.status] : null;
+  // Fix #177 L1 (2026-04-21): se gradient é uma foto (url(...)), usa
+  // Next.js <Image> pra ter srcset responsivo + lazy loading + AVIF/WebP.
+  // Fallback pra background quando é gradient CSS puro.
+  const imageUrl = extractImageUrl(event.gradient);
   return (
     <Link
       href={`/evento/${event.slug}`}
@@ -60,10 +74,21 @@ export function EventCard({ event }: { event: EventCardData }) {
       )}
     >
       <div className="relative aspect-[4/5] w-full overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{ background: event.gradient }}
-        />
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={event.name}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{ background: event.gradient }}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
         {status && (

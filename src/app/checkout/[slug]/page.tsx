@@ -103,7 +103,12 @@ export default function CheckoutPage() {
   // Cancelled return
   const [cancelled, setCancelled] = useState(false);
 
-  // Reset lock on mount (handles bfcache restore after Stripe redirect)
+  // Fix #177 M5 (2026-04-21): reset do submit lock em 2 camadas.
+  // Camada 1 — mount: cobre primeira montagem do componente.
+  // Camada 2 — pageshow event: cobre bfcache restore (voltar do Stripe
+  //   via browser back). useEffect NÃO dispara em bfcache restore, mas
+  //   pageshow sim. Sem isso, lock fica true e user não consegue
+  //   recomprar ingresso quando desiste no Stripe e volta.
   useEffect(() => {
     submitLock.current = false;
     setSubmitting(false);
@@ -111,6 +116,15 @@ export default function CheckoutPage() {
       const params = new URLSearchParams(window.location.search);
       if (params.get("cancelado") === "true") setCancelled(true);
     }
+
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        submitLock.current = false;
+        setSubmitting(false);
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
   }, []);
 
   // Load event data + auth
@@ -372,7 +386,15 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Refresh session to get a fresh JWT, then call edge function
+    // Fix #177 C2 (2026-04-21): proteção em 2 camadas.
+    //
+    // Camada 1 (aqui): getUser() valida o JWT com o Supabase Auth server.
+    // Se expirado, o SDK tenta refresh automático e retorna o novo user;
+    // se refresh também falhar, retorna erro → forçamos relogin.
+    //
+    // Camada 2 (edge create-ticket-checkout:56): a edge chama
+    // supabase.auth.getUser(token) de novo com SERVICE_ROLE_KEY, não
+    // confiando no header do cliente. Token expirado/forjado nunca passa.
     const { data: { user: freshUser }, error: refreshErr } = await supabase.auth.getUser();
     if (refreshErr || !freshUser) {
       setError("Sessão expirada. Faça login novamente.");
@@ -382,6 +404,8 @@ export default function CheckoutPage() {
       return;
     }
 
+    // getSession() pós-getUser() retorna o access_token atualizado pelo
+    // refresh automático (se houve). Usamos ele pra chamar a edge.
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -592,7 +616,10 @@ export default function CheckoutPage() {
                         <button
                           onClick={() => setQty(v.id, -1)}
                           disabled={qty === 0}
-                          className="h-8 w-8 rounded-lg border border-white/10 bg-elevated flex items-center justify-center text-text-secondary hover-real:text-text-primary disabled:opacity-30 cursor-pointer transition-colors"
+                          className={cn(
+                            "h-8 w-8 rounded-lg border border-white/10 bg-elevated flex items-center justify-center text-text-secondary hover-real:text-text-primary disabled:opacity-30 transition-colors",
+                            qty === 0 ? "cursor-not-allowed" : "cursor-pointer",
+                          )}
                         >
                           <Minus size={14} />
                         </button>
@@ -602,7 +629,12 @@ export default function CheckoutPage() {
                         <button
                           onClick={() => setQty(v.id, 1)}
                           disabled={qty >= Math.min(10, disponivel)}
-                          className="h-8 w-8 rounded-lg border border-gold/40 bg-gold/10 flex items-center justify-center text-gold hover-real:bg-gold/20 disabled:opacity-30 cursor-pointer transition-colors"
+                          className={cn(
+                            "h-8 w-8 rounded-lg border border-gold/40 bg-gold/10 flex items-center justify-center text-gold hover-real:bg-gold/20 disabled:opacity-30 transition-colors",
+                            qty >= Math.min(10, disponivel)
+                              ? "cursor-not-allowed"
+                              : "cursor-pointer",
+                          )}
                         >
                           <Plus size={14} />
                         </button>

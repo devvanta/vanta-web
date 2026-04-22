@@ -14,6 +14,29 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    // Fix #177 M4 (2026-04-21): security headers globais.
+    // HSTS força HTTPS por 2 anos + inclui subdomains (app, hq). preload permite
+    // submissão à lista do Chrome (https://hstspreload.org) quando CNPJ sair.
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       {

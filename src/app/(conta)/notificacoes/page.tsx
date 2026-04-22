@@ -17,6 +17,35 @@ import {
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
+/**
+ * Valida link de notificação sem usar regex (fix #177 C1).
+ * Regex anterior permitia bypass via path traversal (/../) e percent-encoding.
+ * Aceita SÓ:
+ *   - paths relativos começando com "/" (mesma origem do site)
+ *   - URLs absolutas cuja origem === window.location.origin
+ * Bloqueia:
+ *   - esquemas perigosos (javascript:, data:, vbscript:, file:)
+ *   - cross-origin (phishing)
+ *   - paths que resolvem pra fora da raiz via traversal
+ */
+function isSafeNotificationLink(link: string): boolean {
+  if (typeof window === "undefined") return false;
+  if (!link || typeof link !== "string") return false;
+  try {
+    // URL() resolve path traversal e validação de esquema.
+    const url = new URL(link, window.location.origin);
+    // Rejeita esquemas que não sejam http/https.
+    if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+    // Rejeita qualquer origem diferente da página atual.
+    if (url.origin !== window.location.origin) return false;
+    // Path normalizado tem que começar com "/" (default do URL parser).
+    if (!url.pathname.startsWith("/")) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 type NotifType =
   | "event"
   | "reminder"
@@ -263,9 +292,10 @@ export default function NotificacoesPage() {
                 <div
                   onClick={() => {
                     if (!n.lida) markRead(n.id);
-                    // Fix H6: sanitize link (javascript:/data: bloqueados).
-                    // Aceita apenas paths relativos começando com /.
-                    if (n.link && /^\/[A-Za-z0-9/_\-?&=.%]*$/.test(n.link)) {
+                    // Fix #177 C1 (2026-04-21): valida link via URL parser em vez
+                    // de regex. Bloqueia open redirect, path traversal e percent-encoded
+                    // bypass. Aceita apenas mesma origem com path que começa com /.
+                    if (n.link && isSafeNotificationLink(n.link)) {
                       window.location.href = n.link;
                     }
                   }}

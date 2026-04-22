@@ -130,7 +130,11 @@ export default function PerfilPage() {
         <div className="p-6 -mt-12 relative">
           <div className="flex items-end justify-between gap-4 mb-6">
             {profile?.avatar_url ? (
-              <img src={profile.avatar_url} alt="" className="h-24 w-24 rounded-2xl border-4 border-card object-cover" />
+              <img
+                src={profile.avatar_url}
+                alt={profile.nome ? `Avatar de ${profile.nome}` : "Meu avatar"}
+                className="h-24 w-24 rounded-2xl border-4 border-card object-cover"
+              />
             ) : (
               <div
                 className="h-24 w-24 rounded-2xl border-4 border-card"

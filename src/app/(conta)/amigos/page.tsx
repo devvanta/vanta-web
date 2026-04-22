@@ -137,7 +137,7 @@ export default function AmigosPage() {
               {f.avatar_url ? (
                 <img
                   src={f.avatar_url}
-                  alt=""
+                  alt={`Avatar de ${f.nome}`}
                   className="h-11 w-11 rounded-full object-cover shrink-0"
                 />
               ) : (

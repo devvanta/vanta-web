@@ -355,7 +355,7 @@ export default function MensagensPage() {
                         {entry.partnerFoto ? (
                           <img
                             src={entry.partnerFoto}
-                            alt=""
+                            alt={`Avatar de ${entry.partnerNome || "contato"}`}
                             className="h-10 w-10 rounded-full object-cover shrink-0"
                           />
                         ) : (
@@ -409,7 +409,7 @@ export default function MensagensPage() {
                     {activePartner.partnerFoto ? (
                       <img
                         src={activePartner.partnerFoto}
-                        alt=""
+                        alt={`Avatar de ${activePartner.partnerNome || "contato"}`}
                         className="h-8 w-8 rounded-full object-cover"
                       />
                     ) : (

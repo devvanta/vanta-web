@@ -49,12 +49,24 @@ export async function generateMetadata({
   return {
     title,
     description,
+    // Fix #177 L2 (2026-04-21): canonical dinâmica pra cada evento.
+    // Evita duplicate content se a URL viralizar com UTM params.
+    alternates: {
+      canonical: `https://maisvanta.com/evento/${slug}`,
+    },
     openGraph: {
       title,
       description,
+      url: `https://maisvanta.com/evento/${slug}`,
+      type: "website",
       ...(event.gradient.startsWith("url(") && {
         images: [{ url: event.gradient.replace(/^url\(|\) center\/cover$/g, "") }],
       }),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
   };
 }

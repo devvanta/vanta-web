@@ -91,7 +91,7 @@ export async function Header() {
                   {avatarUrl ? (
                     <img
                       src={avatarUrl}
-                      alt=""
+                      alt={displayName ? `Avatar de ${displayName}` : "Meu avatar"}
                       className="h-7 w-7 rounded-full object-cover"
                     />
                   ) : (

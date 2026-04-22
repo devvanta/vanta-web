@@ -17,6 +17,12 @@ import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { searchCities } from "@/lib/br-cities-service";
 
+/**
+ * Flag de onboarding concluído. Único lugar onde esse storage key é definido.
+ * App (Capacitor) usa a mesma chave — ver VANTAV2 hooks/useAppHandlers.ts.
+ */
+const ONBOARDING_DONE_KEY = "vanta_onboarding_done";
+
 const INTERESTS = [
   "Funk",
   "Sertanejo",
@@ -141,7 +147,13 @@ export default function OnboardingPage() {
   const finish = useCallback(() => {
     // UX preference only — controls onboarding screen visibility, not access to features.
     // If city was somehow skipped, the (conta) layout server-side guard will redirect back.
-    localStorage.setItem("vanta_onboarding_done", "1");
+    // Fix #177 M2 (2026-04-21): usa a constante exportada do store pra sync com
+    // o app — não hardcode.
+    try {
+      localStorage.setItem(ONBOARDING_DONE_KEY, "1");
+    } catch {
+      // localStorage pode estar indisponível (privacy mode, quota). Ignora.
+    }
     window.location.href = "/";
   }, []);
 

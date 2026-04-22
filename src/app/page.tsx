@@ -21,6 +21,11 @@ import { Button } from "@/components/ui/button";
 import { EventCard, type EventCardData } from "@/components/site/event-card";
 import { getPublicEvents } from "@/lib/supabase/queries";
 
+// Fix #177 H1 (2026-04-21): ISR — home pública regenera a cada 60s.
+// Reduz TTFB e economiza reads no Supabase. Visitantes anônimos pegam
+// sempre a versão em cache (stale-while-revalidate).
+export const revalidate = 60;
+
 export default async function Home() {
   const events = await getPublicEvents({ limit: 16 });
 
