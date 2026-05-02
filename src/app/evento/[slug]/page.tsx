@@ -32,7 +32,9 @@ import { CheckoutCtaButton } from "@/components/site/checkout-cta-button";
 // Fix #177 H1 (2026-04-21): ISR — regenera a cada 60s em background.
 // Auth check (antes em Server Component) foi movido pra <CheckoutCtaButton>
 // Client Component. Permite cache compartilhado entre requests.
-export const revalidate = 60;
+//
+// HOTFIX 2026-05-02 (Dan msg 5371): aumentado pra 3600s — ver page.tsx.
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,

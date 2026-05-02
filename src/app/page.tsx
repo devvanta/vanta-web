@@ -25,7 +25,16 @@ import { VantaIndicaSection } from "@/components/site/vanta-indica-section";
 // Fix #177 H1 (2026-04-21): ISR — home pública regenera a cada 60s.
 // Reduz TTFB e economiza reads no Supabase. Visitantes anônimos pegam
 // sempre a versão em cache (stale-while-revalidate).
-export const revalidate = 60;
+//
+// HOTFIX 2026-05-02 (Dan msg 5371): aumentado de 60s pra 3600s (1h)
+// pra interromper polling causando 522 + saturação pgbouncer Supabase.
+// Bots de uptime + Vercel ISR pre-warm batiam home a cada 10s, com
+// cache stale (>60s) cada acesso disparava JOIN aninhado pesado em
+// eventos_admin (19s timeout). Aumentando TTL pra 1h reduz frequência
+// ~600x. Pré-launch sem evento ao vivo, latência de 1h pra novo evento
+// publicado é aceitável. Reverter pra 60s após aplicar OPÇÃO C
+// (índices + RPC otimizada — Dan plano msg 5364-5367).
+export const revalidate = 3600;
 
 export default async function Home() {
   const events = await getPublicEvents({ limit: 16 });
