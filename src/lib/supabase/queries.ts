@@ -147,47 +147,49 @@ function toEventCard(row: EventoRow): EventCardData {
   };
 }
 
-export async function getPublicEvents(options?: {
+export async function getPublicEvents(_options?: {
   limit?: number;
   city?: string;
 }): Promise<EventCardData[]> {
-  const supabase = await createClient();
+  // ────────────────────────────────────────────────────────────────────────
+  // MODO MANUTENÇÃO 2026-05-02 (Dan msg 5390 — emergência pgbouncer)
+  // ────────────────────────────────────────────────────────────────────────
+  // Vercel ISR estava entrando em cascata de retry: cada cache miss disparava
+  // query 19s contra eventos_admin (JOIN aninhado), pgbouncer rejeitava 522,
+  // Next.js marcava cache invalid e retentava IMEDIATAMENTE → loop infinito
+  // milhares de req/s vindos de IP 35.172.191.253 (Vercel us-east-1).
+  //
+  // Early-return [] CORTA a fonte: sem chamada Supabase = sem 522 = sem retry.
+  // Site mostra home/listagem VAZIAS temporariamente. Aceitável pré-launch.
+  //
+  // RESTAURAR depois de:
+  // 1. Postgres recuperado (pause+restore Supabase)
+  // 2. Migration revert 4-B.2 aplicada (volta FKs pra CASCADE + ANALYZE)
+  // 3. EXPLAIN ANALYZE confirmando query plan = Index Scan, <500ms
+  // 4. OPÇÃO C aplicada (índices + RPCs otimizadas)
+  //
+  // Reverter: restaurar bloco original abaixo (commit 9c634b5 anterior).
+  // ────────────────────────────────────────────────────────────────────────
+  return [];
 
-  let query = supabase
-    .from("eventos_admin")
-    .select(
-      `
-      id, slug, nome, local, cidade, data_inicio, data_fim,
-      descricao, endereco, foto, estilos, coords, publicado,
-      status_evento, categoria, classificacao_etaria, comunidade_id,
-      mais_vanta_config_evento ( id, ativo ),
-      lotes (
-        id, nome, ativo,
-        variacoes_ingresso ( id, valor, limite, vendidos )
-      )
-    `
-    )
-    .eq("publicado", true)
-    .eq("status_evento", "ATIVO")
-    .gte("data_fim", new Date().toISOString())
-    .order("data_inicio", { ascending: true });
-
-  if (options?.city) {
-    query = query.eq("cidade", options.city);
-  }
-
-  if (options?.limit) {
-    query = query.limit(options.limit);
-  }
-
-  const { data, error } = await query;
-
-  if (error || !data) {
-    console.error("Failed to fetch events:", error);
-    return [];
-  }
-
-  return (data as unknown as EventoRow[]).map(toEventCard);
+  // BLOCO ORIGINAL (manter pra restauração):
+  // const supabase = await createClient();
+  // let query = supabase.from("eventos_admin").select(`
+  //   id, slug, nome, local, cidade, data_inicio, data_fim,
+  //   descricao, endereco, foto, estilos, coords, publicado,
+  //   status_evento, categoria, classificacao_etaria, comunidade_id,
+  //   mais_vanta_config_evento ( id, ativo ),
+  //   lotes (id, nome, ativo, variacoes_ingresso ( id, valor, limite, vendidos ))
+  // `)
+  //   .eq("publicado", true)
+  //   .eq("status_evento", "ATIVO")
+  //   .gte("data_fim", new Date().toISOString())
+  //   .order("data_inicio", { ascending: true });
+  // if (options?.city) query = query.eq("cidade", options.city);
+  // if (options?.limit) query = query.limit(options.limit);
+  // const { data, error } = await query;
+  // if (error || !data) { console.error("Failed to fetch events:", error); return []; }
+  // return (data as unknown as EventoRow[]).map(toEventCard);
 }
 
 export async function getEventBySlug(
