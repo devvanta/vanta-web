@@ -151,55 +151,33 @@ export async function getPublicEvents(options?: {
   limit?: number;
   city?: string;
 }): Promise<EventCardData[]> {
-  // Restaurado 2026-05-02 04:10 BRT (pós Restart Supabase + EXPLAIN ANALYZE
-  // confirmando query plan = Index Scan via idx_eventos_admin_publicado_data,
-  // 11.8ms total). Modo manutenção (commit a6acbf6) revertido.
+  // Migrado 2026-05-02 06:30 BRT pra RPC get_public_events_optimized
+  // (issue #243, postmortem item 2 fechado).
   //
-  // Emergência 2026-05-02 (Dan msg 5390 + postmortem msg 5394):
+  // Histórico do incidente 2026-05-02:
   // - Causa raiz: stats outdated do planner pós-migração 4-B.2 (DROP+ADD
   //   FK em 7 constraints) + compute Free tier (t4g.nano I/O burst esgotado)
-  //   + polling agressivo Vercel ISR sem backoff.
-  // - Mitigação aplicada: Restart Supabase via dashboard (suporte oficial).
-  //   Restart re-coletou stats → planner voltou pra Index Scan.
-  // - FKs em SET NULL preservadas (4-B.2 mantida, Doutrina HARD intacta).
+  //   + Vercel ISR retry agressivo sem backoff.
+  // - Mitigação imediata: modo manutenção early-return [] (commit a6acbf6).
+  // - Resolução: Restart Supabase + ANALYZE retroativo + restore commit 4ad2daa.
   //
-  // Pendências da frente futura (postmortem):
-  // - OPÇÃO C: refatorar pra RPC otimizada (item 2)
-  // - statement_timeout=5s, idle_in_tx_timeout=10s no client (item 3)
-  // - Cache + tag invalidation (item 4)
-  // - Circuit breaker (item 5)
-  // - Grafana monitoring (item 6)
-  // - Decisão Pro plan (item 7)
+  // Defense-in-depth aplicada (postmortem completo):
+  // - 4 índices novos em eventos_admin/lotes/variacoes_ingresso (OPÇÃO C)
+  // - 2 RPCs SECURITY DEFINER STABLE com search_path=public (OPÇÃO C)
+  // - statement_timeout=5s + idle_in_tx=10s + lock_timeout=3s em anon/authenticated
+  // - Trigger guard_no_hard_delete + RLS DELETE block em WORM (vendas_log,
+  //   pagamentos_promoter, reembolsos)
+  //
+  // Esta função agora chama .rpc() drop-in (shape compatível 100% com
+  // .from(eventos_admin).select(...) anterior). RPC encapsula JOIN aninhado
+  // e Postgres cacheia query plan da function (vs replanning a cada call).
   const supabase = await createClient();
 
-  let query = supabase
-    .from("eventos_admin")
-    .select(
-      `
-      id, slug, nome, local, cidade, data_inicio, data_fim,
-      descricao, endereco, foto, estilos, coords, publicado,
-      status_evento, categoria, classificacao_etaria, comunidade_id,
-      mais_vanta_config_evento ( id, ativo ),
-      lotes (
-        id, nome, ativo,
-        variacoes_ingresso ( id, valor, limite, vendidos )
-      )
-    `
-    )
-    .eq("publicado", true)
-    .eq("status_evento", "ATIVO")
-    .gte("data_fim", new Date().toISOString())
-    .order("data_inicio", { ascending: true });
-
-  if (options?.city) {
-    query = query.eq("cidade", options.city);
-  }
-
-  if (options?.limit) {
-    query = query.limit(options.limit);
-  }
-
-  const { data, error } = await query;
+  const { data, error } = await supabase.rpc("get_public_events_optimized", {
+    p_limit: options?.limit ?? 16,
+    p_cidade: options?.city ?? undefined,
+    p_offset: 0,
+  });
 
   if (error || !data) {
     console.error("Failed to fetch events:", error);
@@ -212,29 +190,20 @@ export async function getPublicEvents(options?: {
 export async function getEventBySlug(
   slug: string
 ): Promise<EventCardData | null> {
+  // Migrado 2026-05-02 06:30 BRT pra RPC get_public_event_by_slug.
+  // Drop-in com shape compatível 100%. Detalhes em getPublicEvents acima.
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("eventos_admin")
-    .select(
-      `
-      id, slug, nome, local, cidade, data_inicio, data_fim,
-      descricao, endereco, foto, estilos, coords, publicado,
-      status_evento, categoria, classificacao_etaria, comunidade_id,
-      mais_vanta_config_evento ( id, ativo ),
-      lotes (
-        id, nome, ativo,
-        variacoes_ingresso ( id, valor, limite, vendidos )
-      )
-    `
-    )
-    .eq("publicado", true)
-    .eq("slug", slug)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_public_event_by_slug", {
+    p_slug: slug,
+  });
 
-  if (error || !data) return null;
+  if (error || !data || (data as unknown as EventoRow[]).length === 0) {
+    if (error) console.error("Failed to fetch event by slug:", error);
+    return null;
+  }
 
-  return toEventCard(data as unknown as EventoRow);
+  return toEventCard((data as unknown as EventoRow[])[0]);
 }
 
 export type LoteWithVariacoes = {

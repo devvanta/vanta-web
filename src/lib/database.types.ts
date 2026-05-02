@@ -51,13 +51,17 @@ export type Database = {
       }
       assinaturas_mais_vanta: {
         Row: {
-          comunidade_id: string
+          cancelamento_solicitado_em: string | null
+          ciclo_fim: string | null
+          ciclo_inicio: string | null
+          comunidade_id: string | null
           criado_em: string
           criado_por: string
           eventos_mv_usados: number | null
           fim: string | null
           id: string
           inicio: string | null
+          passes_restantes: number
           plano: string
           plano_id: string | null
           plano_snapshot: Json | null
@@ -67,13 +71,17 @@ export type Database = {
           valor_mensal: number
         }
         Insert: {
-          comunidade_id: string
+          cancelamento_solicitado_em?: string | null
+          ciclo_fim?: string | null
+          ciclo_inicio?: string | null
+          comunidade_id?: string | null
           criado_em?: string
           criado_por: string
           eventos_mv_usados?: number | null
           fim?: string | null
           id?: string
           inicio?: string | null
+          passes_restantes?: number
           plano: string
           plano_id?: string | null
           plano_snapshot?: Json | null
@@ -83,13 +91,17 @@ export type Database = {
           valor_mensal?: number
         }
         Update: {
-          comunidade_id?: string
+          cancelamento_solicitado_em?: string | null
+          ciclo_fim?: string | null
+          ciclo_inicio?: string | null
+          comunidade_id?: string | null
           criado_em?: string
           criado_por?: string
           eventos_mv_usados?: number | null
           fim?: string | null
           id?: string
           inicio?: string | null
+          passes_restantes?: number
           plano?: string
           plano_id?: string | null
           plano_snapshot?: Json | null
@@ -119,6 +131,20 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assinaturas_mais_vanta_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: true
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "assinaturas_mais_vanta_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: true
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
           },
           {
             foreignKeyName: "assinaturas_mais_vanta_plano_id_fkey"
@@ -258,85 +284,24 @@ export type Database = {
           bloqueado_id: string
           bloqueador_id: string
           criado_em: string
+          deleted_at: string | null
           id: string
         }
         Insert: {
           bloqueado_id: string
           bloqueador_id: string
           criado_em?: string
+          deleted_at?: string | null
           id?: string
         }
         Update: {
           bloqueado_id?: string
           bloqueador_id?: string
           criado_em?: string
+          deleted_at?: string | null
           id?: string
         }
         Relationships: []
-      }
-      brand_profiles: {
-        Row: {
-          atualizado_em: string
-          comunidade_id: string | null
-          criado_em: string
-          criado_por: string | null
-          flux_lora_id: string | null
-          id: string
-          ideogram_style_code: string | null
-          nome: string
-          perfil_visual: Json
-          referencias: string[]
-          validado: boolean
-        }
-        Insert: {
-          atualizado_em?: string
-          comunidade_id?: string | null
-          criado_em?: string
-          criado_por?: string | null
-          flux_lora_id?: string | null
-          id?: string
-          ideogram_style_code?: string | null
-          nome: string
-          perfil_visual?: Json
-          referencias?: string[]
-          validado?: boolean
-        }
-        Update: {
-          atualizado_em?: string
-          comunidade_id?: string | null
-          criado_em?: string
-          criado_por?: string | null
-          flux_lora_id?: string | null
-          id?: string
-          ideogram_style_code?: string | null
-          nome?: string
-          perfil_visual?: Json
-          referencias?: string[]
-          validado?: boolean
-        }
-        Relationships: [
-          {
-            foreignKeyName: "brand_profiles_comunidade_id_fkey"
-            columns: ["comunidade_id"]
-            isOneToOne: false
-            referencedRelation: "comunidades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "brand_profiles_comunidade_id_fkey"
-            columns: ["comunidade_id"]
-            isOneToOne: false
-            referencedRelation: "comunidades_admin"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "brand_profiles_comunidade_id_fkey"
-            columns: ["comunidade_id"]
-            isOneToOne: false
-            referencedRelation: "comunidades_publico"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       campanhas_enviadas: {
         Row: {
@@ -385,55 +350,6 @@ export type Database = {
           titulo?: string
         }
         Relationships: []
-      }
-      cargos: {
-        Row: {
-          atribuido_em: string
-          atribuido_por: string | null
-          comunidade_id: string
-          id: string
-          membro_id: string
-          tipo: string
-        }
-        Insert: {
-          atribuido_em?: string
-          atribuido_por?: string | null
-          comunidade_id: string
-          id?: string
-          membro_id: string
-          tipo: string
-        }
-        Update: {
-          atribuido_em?: string
-          atribuido_por?: string | null
-          comunidade_id?: string
-          id?: string
-          membro_id?: string
-          tipo?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "cargos_comunidade_id_fkey"
-            columns: ["comunidade_id"]
-            isOneToOne: false
-            referencedRelation: "comunidades"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cargos_comunidade_id_fkey"
-            columns: ["comunidade_id"]
-            isOneToOne: false
-            referencedRelation: "comunidades_admin"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "cargos_comunidade_id_fkey"
-            columns: ["comunidade_id"]
-            isOneToOne: false
-            referencedRelation: "comunidades_publico"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       cargos_plataforma: {
         Row: {
@@ -637,6 +553,7 @@ export type Database = {
           beneficios_diamante: string[] | null
           beneficios_ouro: string[] | null
           beneficios_prata: string[] | null
+          beneficios_social: string[] | null
           bloqueio1_dias: number | null
           bloqueio2_dias: number | null
           comunidade_id: string
@@ -645,6 +562,7 @@ export type Database = {
           convites_lista: number
           convites_presenca: number
           convites_social: number
+          deleted_at: string | null
           dias_castigo: number | null
           id: string
           infracoes_limite: number | null
@@ -652,6 +570,7 @@ export type Database = {
           limite_diamante: number | null
           limite_ouro: number | null
           limite_prata: number | null
+          limite_social: number | null
           prazo_post_horas: number | null
           stripe_connect_account_id: string | null
           stripe_connect_charges_enabled: boolean | null
@@ -666,6 +585,7 @@ export type Database = {
           beneficios_diamante?: string[] | null
           beneficios_ouro?: string[] | null
           beneficios_prata?: string[] | null
+          beneficios_social?: string[] | null
           bloqueio1_dias?: number | null
           bloqueio2_dias?: number | null
           comunidade_id: string
@@ -674,6 +594,7 @@ export type Database = {
           convites_lista?: number
           convites_presenca?: number
           convites_social?: number
+          deleted_at?: string | null
           dias_castigo?: number | null
           id?: string
           infracoes_limite?: number | null
@@ -681,6 +602,7 @@ export type Database = {
           limite_diamante?: number | null
           limite_ouro?: number | null
           limite_prata?: number | null
+          limite_social?: number | null
           prazo_post_horas?: number | null
           stripe_connect_account_id?: string | null
           stripe_connect_charges_enabled?: boolean | null
@@ -695,6 +617,7 @@ export type Database = {
           beneficios_diamante?: string[] | null
           beneficios_ouro?: string[] | null
           beneficios_prata?: string[] | null
+          beneficios_social?: string[] | null
           bloqueio1_dias?: number | null
           bloqueio2_dias?: number | null
           comunidade_id?: string
@@ -703,6 +626,7 @@ export type Database = {
           convites_lista?: number
           convites_presenca?: number
           convites_social?: number
+          deleted_at?: string | null
           dias_castigo?: number | null
           id?: string
           infracoes_limite?: number | null
@@ -710,6 +634,7 @@ export type Database = {
           limite_diamante?: number | null
           limite_ouro?: number | null
           limite_prata?: number | null
+          limite_social?: number | null
           prazo_post_horas?: number | null
           stripe_connect_account_id?: string | null
           stripe_connect_charges_enabled?: boolean | null
@@ -740,6 +665,20 @@ export type Database = {
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "clube_config_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: true
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "clube_config_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: true
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
         ]
       }
       comemoracoes: {
@@ -751,6 +690,7 @@ export type Database = {
           created_at: string
           data_aniversario: string | null
           data_comemoracao: string
+          deleted_at: string | null
           em_analise_em: string | null
           evento_id: string | null
           id: string
@@ -775,6 +715,7 @@ export type Database = {
           created_at?: string
           data_aniversario?: string | null
           data_comemoracao: string
+          deleted_at?: string | null
           em_analise_em?: string | null
           evento_id?: string | null
           id?: string
@@ -799,6 +740,7 @@ export type Database = {
           created_at?: string
           data_aniversario?: string | null
           data_comemoracao?: string
+          deleted_at?: string | null
           em_analise_em?: string | null
           evento_id?: string | null
           id?: string
@@ -845,6 +787,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "comemoracoes_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "comemoracoes_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
             foreignKeyName: "comemoracoes_evento_id_fkey"
             columns: ["evento_id"]
             isOneToOne: false
@@ -866,6 +822,7 @@ export type Database = {
           created_at: string
           datas_bloqueadas: Json | null
           deadline_hora: string | null
+          deleted_at: string | null
           evento_id: string | null
           habilitado: boolean
           id: string
@@ -877,6 +834,7 @@ export type Database = {
           created_at?: string
           datas_bloqueadas?: Json | null
           deadline_hora?: string | null
+          deleted_at?: string | null
           evento_id?: string | null
           habilitado?: boolean
           id?: string
@@ -888,6 +846,7 @@ export type Database = {
           created_at?: string
           datas_bloqueadas?: Json | null
           deadline_hora?: string | null
+          deleted_at?: string | null
           evento_id?: string | null
           habilitado?: boolean
           id?: string
@@ -915,6 +874,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comemoracoes_config_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "comemoracoes_config_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
           },
           {
             foreignKeyName: "comemoracoes_config_evento_id_fkey"
@@ -976,6 +949,7 @@ export type Database = {
           config_id: string
           cortesias: number
           created_at: string
+          deleted_at: string | null
           id: string
           min_vendas: number
           ordem: number
@@ -985,6 +959,7 @@ export type Database = {
           config_id: string
           cortesias?: number
           created_at?: string
+          deleted_at?: string | null
           id?: string
           min_vendas: number
           ordem?: number
@@ -994,6 +969,7 @@ export type Database = {
           config_id?: string
           cortesias?: number
           created_at?: string
+          deleted_at?: string | null
           id?: string
           min_vendas?: number
           ordem?: number
@@ -1012,18 +988,21 @@ export type Database = {
         Row: {
           comunidade_id: string
           created_at: string | null
+          deleted_at: string | null
           id: string
           user_id: string
         }
         Insert: {
           comunidade_id: string
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           user_id: string
         }
         Update: {
           comunidade_id?: string
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           user_id?: string
         }
@@ -1049,6 +1028,20 @@ export type Database = {
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "community_follows_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "community_follows_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
         ]
       }
       comprovantes_meia: {
@@ -1057,6 +1050,7 @@ export type Database = {
           aprovado_por: string | null
           atualizado_em: string
           criado_em: string
+          deleted_at: string | null
           foto_url: string
           fotos: Json | null
           id: string
@@ -1071,6 +1065,7 @@ export type Database = {
           aprovado_por?: string | null
           atualizado_em?: string
           criado_em?: string
+          deleted_at?: string | null
           foto_url: string
           fotos?: Json | null
           id?: string
@@ -1085,6 +1080,7 @@ export type Database = {
           aprovado_por?: string | null
           atualizado_em?: string
           criado_em?: string
+          deleted_at?: string | null
           foto_url?: string
           fotos?: Json | null
           id?: string
@@ -1111,6 +1107,36 @@ export type Database = {
           },
         ]
       }
+      comprovantes_meia_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          comprovante_id: string
+          created_at: string
+          id: string
+          snapshot_after: Json | null
+          snapshot_before: Json | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          comprovante_id: string
+          created_at?: string
+          id?: string
+          snapshot_after?: Json | null
+          snapshot_before?: Json | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          comprovante_id?: string
+          created_at?: string
+          id?: string
+          snapshot_after?: Json | null
+          snapshot_before?: Json | null
+        }
+        Relationships: []
+      }
       comunidades: {
         Row: {
           ativa: boolean
@@ -1126,6 +1152,7 @@ export type Database = {
           cota_nomes_lista: number | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           descricao: string
           dono_id: string | null
           endereco: string | null
@@ -1178,6 +1205,7 @@ export type Database = {
           cota_nomes_lista?: number | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           dono_id?: string | null
           endereco?: string | null
@@ -1230,6 +1258,7 @@ export type Database = {
           cota_nomes_lista?: number | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           descricao?: string
           dono_id?: string | null
           endereco?: string | null
@@ -1274,7 +1303,7 @@ export type Database = {
         Row: {
           aceito_em: string | null
           aceito_por: string | null
-          comunidade_id: string
+          comunidade_id: string | null
           cota_cortesias: number | null
           cota_nomes_lista: number | null
           created_at: string
@@ -1298,7 +1327,7 @@ export type Database = {
         Insert: {
           aceito_em?: string | null
           aceito_por?: string | null
-          comunidade_id: string
+          comunidade_id?: string | null
           cota_cortesias?: number | null
           cota_nomes_lista?: number | null
           created_at?: string
@@ -1322,7 +1351,7 @@ export type Database = {
         Update: {
           aceito_em?: string | null
           aceito_por?: string | null
-          comunidade_id?: string
+          comunidade_id?: string | null
           cota_cortesias?: number | null
           cota_nomes_lista?: number | null
           created_at?: string
@@ -1364,6 +1393,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "condicoes_comerciais_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "condicoes_comerciais_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
           },
         ]
       }
@@ -1417,14 +1460,30 @@ export type Database = {
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "connect_events_log_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "connect_events_log_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
         ]
       }
       convidados_lista: {
         Row: {
           checked_in: boolean
           checked_in_em: string | null
+          checked_in_por_id: string | null
           checked_in_por_nome: string | null
           created_at: string
+          deleted_at: string | null
           forma_pagamento: string | null
           id: string
           inserido_por: string | null
@@ -1439,8 +1498,10 @@ export type Database = {
         Insert: {
           checked_in?: boolean
           checked_in_em?: string | null
+          checked_in_por_id?: string | null
           checked_in_por_nome?: string | null
           created_at?: string
+          deleted_at?: string | null
           forma_pagamento?: string | null
           id?: string
           inserido_por?: string | null
@@ -1455,8 +1516,10 @@ export type Database = {
         Update: {
           checked_in?: boolean
           checked_in_em?: string | null
+          checked_in_por_id?: string | null
           checked_in_por_nome?: string | null
           created_at?: string
+          deleted_at?: string | null
           forma_pagamento?: string | null
           id?: string
           inserido_por?: string | null
@@ -1551,7 +1614,7 @@ export type Database = {
           cidade_id?: string | null
           criado_em?: string
           criado_por: string
-          expira_em: string
+          expira_em?: string
           id?: string
           parceiro_nome?: string | null
           status?: string
@@ -1600,6 +1663,7 @@ export type Database = {
       cortesias_config: {
         Row: {
           created_at: string
+          deleted_at: string | null
           evento_id: string
           id: string
           limite: number
@@ -1609,6 +1673,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           evento_id: string
           id?: string
           limite?: number
@@ -1618,6 +1683,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           evento_id?: string
           id?: string
           limite?: number
@@ -1639,7 +1705,7 @@ export type Database = {
         Row: {
           created_at: string
           destinatario_nome: string
-          evento_id: string
+          evento_id: string | null
           id: string
           quantidade: number
           remetente_nome: string
@@ -1648,7 +1714,7 @@ export type Database = {
         Insert: {
           created_at?: string
           destinatario_nome?: string
-          evento_id: string
+          evento_id?: string | null
           id?: string
           quantidade?: number
           remetente_nome?: string
@@ -1657,7 +1723,7 @@ export type Database = {
         Update: {
           created_at?: string
           destinatario_nome?: string
-          evento_id?: string
+          evento_id?: string | null
           id?: string
           quantidade?: number
           remetente_nome?: string
@@ -1732,6 +1798,7 @@ export type Database = {
           comissao_tipo: string | null
           comissao_valor: number | null
           created_at: string
+          deleted_at: string | null
           id: string
           lista_id: string
           promoter_id: string
@@ -1743,6 +1810,7 @@ export type Database = {
           comissao_tipo?: string | null
           comissao_valor?: number | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           lista_id: string
           promoter_id: string
@@ -1754,6 +1822,7 @@ export type Database = {
           comissao_tipo?: string | null
           comissao_valor?: number | null
           created_at?: string
+          deleted_at?: string | null
           id?: string
           lista_id?: string
           promoter_id?: string
@@ -1784,6 +1853,7 @@ export type Database = {
           comunidade_id: string | null
           criado_em: string
           criado_por: string
+          deleted_at: string | null
           evento_id: string | null
           id: string
           limite_usos: number | null
@@ -1798,6 +1868,7 @@ export type Database = {
           comunidade_id?: string | null
           criado_em?: string
           criado_por: string
+          deleted_at?: string | null
           evento_id?: string | null
           id?: string
           limite_usos?: number | null
@@ -1812,6 +1883,7 @@ export type Database = {
           comunidade_id?: string | null
           criado_em?: string
           criado_por?: string
+          deleted_at?: string | null
           evento_id?: string | null
           id?: string
           limite_usos?: number | null
@@ -1843,6 +1915,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "cupons_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "cupons_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
             foreignKeyName: "cupons_evento_id_fkey"
             columns: ["evento_id"]
             isOneToOne: false
@@ -1856,6 +1942,7 @@ export type Database = {
           atualizado_em: string | null
           cidade_id: string
           criado_em: string
+          deleted_at: string | null
           desconto_percentual: number | null
           desconto_valor: number | null
           descricao: string | null
@@ -1878,6 +1965,7 @@ export type Database = {
           atualizado_em?: string | null
           cidade_id: string
           criado_em?: string
+          deleted_at?: string | null
           desconto_percentual?: number | null
           desconto_valor?: number | null
           descricao?: string | null
@@ -1900,6 +1988,7 @@ export type Database = {
           atualizado_em?: string | null
           cidade_id?: string
           criado_em?: string
+          deleted_at?: string | null
           desconto_percentual?: number | null
           desconto_valor?: number | null
           descricao?: string | null
@@ -1982,6 +2071,7 @@ export type Database = {
           comunidade_id: string | null
           created_at: string
           dados: Json
+          deleted_at: string | null
           expires_at: string
           foto_temp_url: string | null
           id: string
@@ -1994,6 +2084,7 @@ export type Database = {
           comunidade_id?: string | null
           created_at?: string
           dados?: Json
+          deleted_at?: string | null
           expires_at?: string
           foto_temp_url?: string | null
           id?: string
@@ -2006,6 +2097,7 @@ export type Database = {
           comunidade_id?: string | null
           created_at?: string
           dados?: Json
+          deleted_at?: string | null
           expires_at?: string
           foto_temp_url?: string | null
           id?: string
@@ -2036,11 +2128,26 @@ export type Database = {
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "drafts_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "drafts_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
         ]
       }
       equipe_evento: {
         Row: {
           created_at: string
+          deleted_at: string | null
           evento_id: string
           id: string
           liberar_lista: boolean
@@ -2052,6 +2159,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           evento_id: string
           id?: string
           liberar_lista?: boolean
@@ -2063,6 +2171,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           evento_id?: string
           id?: string
           liberar_lista?: boolean
@@ -2086,6 +2195,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           created_at: string | null
+          deleted_at: string | null
           id: string
           label: string
           ordem: number | null
@@ -2093,6 +2203,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           label: string
           ordem?: number | null
@@ -2100,6 +2211,7 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           label?: string
           ordem?: number | null
@@ -2109,18 +2221,21 @@ export type Database = {
       evento_favoritos: {
         Row: {
           created_at: string | null
+          deleted_at: string | null
           evento_id: string
           id: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          deleted_at?: string | null
           evento_id: string
           id?: string
           user_id: string
         }
         Update: {
           created_at?: string | null
+          deleted_at?: string | null
           evento_id?: string
           id?: string
           user_id?: string
@@ -2155,6 +2270,7 @@ export type Database = {
           custos_fixos: number | null
           data_fim: string | null
           data_inicio: string
+          deleted_at: string | null
           descricao: string
           edicao_motivo: string | null
           edicao_pendente: Json | null
@@ -2228,6 +2344,7 @@ export type Database = {
           custos_fixos?: number | null
           data_fim?: string | null
           data_inicio: string
+          deleted_at?: string | null
           descricao?: string
           edicao_motivo?: string | null
           edicao_pendente?: Json | null
@@ -2301,6 +2418,7 @@ export type Database = {
           custos_fixos?: number | null
           data_fim?: string | null
           data_inicio?: string
+          deleted_at?: string | null
           descricao?: string
           edicao_motivo?: string | null
           edicao_pendente?: Json | null
@@ -2385,6 +2503,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
             foreignKeyName: "eventos_admin_evento_origem_id_fkey"
             columns: ["evento_origem_id"]
             isOneToOne: false
@@ -2402,6 +2534,7 @@ export type Database = {
           created_at: string
           data_estimativa: string | null
           data_evento: string | null
+          deleted_at: string | null
           descricao: string
           em_analise_em: string | null
           email: string
@@ -2429,6 +2562,7 @@ export type Database = {
           created_at?: string
           data_estimativa?: string | null
           data_evento?: string | null
+          deleted_at?: string | null
           descricao: string
           em_analise_em?: string | null
           email: string
@@ -2456,6 +2590,7 @@ export type Database = {
           created_at?: string
           data_estimativa?: string | null
           data_evento?: string | null
+          deleted_at?: string | null
           descricao?: string
           em_analise_em?: string | null
           email?: string
@@ -2505,6 +2640,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "eventos_privados_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "eventos_privados_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
             foreignKeyName: "eventos_privados_evento_id_fkey"
             columns: ["evento_id"]
             isOneToOne: false
@@ -2524,6 +2673,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           created_at: string | null
+          deleted_at: string | null
           id: string
           label: string
           ordem: number | null
@@ -2531,6 +2681,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           label: string
           ordem?: number | null
@@ -2538,6 +2689,7 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           label?: string
           ordem?: number | null
@@ -2547,30 +2699,30 @@ export type Database = {
       fidelidade_cliente: {
         Row: {
           atualizado_em: string | null
-          comunidade_id: string
+          comunidade_id: string | null
           id: string
           pontos: number | null
           tier: string | null
           ultimo_evento_id: string | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           atualizado_em?: string | null
-          comunidade_id: string
+          comunidade_id?: string | null
           id?: string
           pontos?: number | null
           tier?: string | null
           ultimo_evento_id?: string | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           atualizado_em?: string | null
-          comunidade_id?: string
+          comunidade_id?: string | null
           id?: string
           pontos?: number | null
           tier?: string | null
           ultimo_evento_id?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2595,6 +2747,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "fidelidade_cliente_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "fidelidade_cliente_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
             foreignKeyName: "fidelidade_cliente_ultimo_evento_id_fkey"
             columns: ["ultimo_evento_id"]
             isOneToOne: false
@@ -2614,6 +2780,7 @@ export type Database = {
         Row: {
           ativo: boolean | null
           created_at: string | null
+          deleted_at: string | null
           id: string
           label: string
           ordem: number | null
@@ -2621,6 +2788,7 @@ export type Database = {
         Insert: {
           ativo?: boolean | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           label: string
           ordem?: number | null
@@ -2628,6 +2796,7 @@ export type Database = {
         Update: {
           ativo?: boolean | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           label?: string
           ordem?: number | null
@@ -2638,6 +2807,7 @@ export type Database = {
         Row: {
           addressee_id: string
           created_at: string
+          deleted_at: string | null
           id: string
           requester_id: string
           status: string
@@ -2646,6 +2816,7 @@ export type Database = {
         Insert: {
           addressee_id: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           requester_id: string
           status?: string
@@ -2654,12 +2825,63 @@ export type Database = {
         Update: {
           addressee_id?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           requester_id?: string
           status?: string
           updated_at?: string
         }
         Relationships: []
+      }
+      historico_ciclos_mv: {
+        Row: {
+          alcance_estimado: number
+          assinatura_id: string | null
+          ciclo_fim: string
+          ciclo_inicio: string
+          ciclo_numero: number
+          eventos_ativados_count: number
+          id: string
+          passes_iniciais: number
+          passes_usados: number
+          resgates_total: number
+          snapshot_at: string
+        }
+        Insert: {
+          alcance_estimado?: number
+          assinatura_id?: string | null
+          ciclo_fim: string
+          ciclo_inicio: string
+          ciclo_numero: number
+          eventos_ativados_count?: number
+          id?: string
+          passes_iniciais: number
+          passes_usados: number
+          resgates_total?: number
+          snapshot_at?: string
+        }
+        Update: {
+          alcance_estimado?: number
+          assinatura_id?: string | null
+          ciclo_fim?: string
+          ciclo_inicio?: string
+          ciclo_numero?: number
+          eventos_ativados_count?: number
+          id?: string
+          passes_iniciais?: number
+          passes_usados?: number
+          resgates_total?: number
+          snapshot_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_ciclos_mv_assinatura_id_fkey"
+            columns: ["assinatura_id"]
+            isOneToOne: false
+            referencedRelation: "assinaturas_mais_vanta"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hq_audit_log: {
         Row: {
@@ -2764,6 +2986,7 @@ export type Database = {
         Row: {
           criado_em: string | null
           criado_por: string | null
+          deleted_at: string | null
           evento_id: string | null
           evento_nome: string | null
           id: string
@@ -2773,6 +2996,7 @@ export type Database = {
         Insert: {
           criado_em?: string | null
           criado_por?: string | null
+          deleted_at?: string | null
           evento_id?: string | null
           evento_nome?: string | null
           id?: string
@@ -2782,6 +3006,7 @@ export type Database = {
         Update: {
           criado_em?: string | null
           criado_por?: string | null
+          deleted_at?: string | null
           evento_id?: string | null
           evento_nome?: string | null
           id?: string
@@ -2819,6 +3044,7 @@ export type Database = {
       }
       legal_documents: {
         Row: {
+          checksum: string | null
           conteudo: string
           criado_em: string | null
           criado_por: string | null
@@ -2830,6 +3056,7 @@ export type Database = {
           versao: number
         }
         Insert: {
+          checksum?: string | null
           conteudo?: string
           criado_em?: string | null
           criado_por?: string | null
@@ -2841,6 +3068,7 @@ export type Database = {
           versao?: number
         }
         Update: {
+          checksum?: string | null
           conteudo?: string
           criado_em?: string | null
           criado_por?: string | null
@@ -2868,21 +3096,48 @@ export type Database = {
           },
         ]
       }
+      lgpd_export_audit: {
+        Row: {
+          exported_at: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          exported_at?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          exported_at?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       listas_evento: {
         Row: {
           created_at: string
+          deleted_at: string | null
           evento_id: string
           id: string
           teto_global_total: number | null
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           evento_id: string
           id?: string
           teto_global_total?: number | null
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           evento_id?: string
           id?: string
           teto_global_total?: number | null
@@ -2902,31 +3157,37 @@ export type Database = {
           ativo: boolean
           created_at: string
           data_validade: string | null
+          deleted_at: string | null
           evento_id: string
           id: string
           nome: string
           ordem: number
           virar_pct: number | null
+          visibilidade: string
         }
         Insert: {
           ativo?: boolean
           created_at?: string
           data_validade?: string | null
+          deleted_at?: string | null
           evento_id: string
           id?: string
           nome: string
           ordem?: number
           virar_pct?: number | null
+          visibilidade?: string
         }
         Update: {
           ativo?: boolean
           created_at?: string
           data_validade?: string | null
+          deleted_at?: string | null
           evento_id?: string
           id?: string
           nome?: string
           ordem?: number
           virar_pct?: number | null
+          visibilidade?: string
         }
         Relationships: [
           {
@@ -3036,8 +3297,10 @@ export type Database = {
           ativo: boolean
           created_at: string
           creator_sublevel_minimo: string | null
+          deleted_at: string | null
           desconto_percentual: number | null
           evento_id: string
+          formato_entrada: string
           id: string
           lista_id: string | null
           lote_id: string | null
@@ -3051,8 +3314,10 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           creator_sublevel_minimo?: string | null
+          deleted_at?: string | null
           desconto_percentual?: number | null
           evento_id: string
+          formato_entrada?: string
           id?: string
           lista_id?: string | null
           lote_id?: string | null
@@ -3066,8 +3331,10 @@ export type Database = {
           ativo?: boolean
           created_at?: string
           creator_sublevel_minimo?: string | null
+          deleted_at?: string | null
           desconto_percentual?: number | null
           evento_id?: string
+          formato_entrada?: string
           id?: string
           lista_id?: string | null
           lote_id?: string | null
@@ -3122,6 +3389,7 @@ export type Database = {
           convites_disponiveis: number | null
           convites_usados: number | null
           creator_sublevel: string | null
+          expulsoes_total: number
           genero: string | null
           id: string
           instagram_handle: string | null
@@ -3157,6 +3425,7 @@ export type Database = {
           convites_disponiveis?: number | null
           convites_usados?: number | null
           creator_sublevel?: string | null
+          expulsoes_total?: number
           genero?: string | null
           id?: string
           instagram_handle?: string | null
@@ -3192,6 +3461,7 @@ export type Database = {
           convites_disponiveis?: number | null
           convites_usados?: number | null
           creator_sublevel?: string | null
+          expulsoes_total?: number
           genero?: string | null
           id?: string
           instagram_handle?: string | null
@@ -3229,12 +3499,27 @@ export type Database = {
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "membros_clube_comunidade_origem_fkey"
+            columns: ["comunidade_origem"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "membros_clube_comunidade_origem_fkey"
+            columns: ["comunidade_origem"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
         ]
       }
       mesas: {
         Row: {
           capacidade: number
           created_at: string
+          deleted_at: string | null
           evento_id: string
           id: string
           label: string
@@ -3247,6 +3532,7 @@ export type Database = {
         Insert: {
           capacidade?: number
           created_at?: string
+          deleted_at?: string | null
           evento_id: string
           id?: string
           label?: string
@@ -3259,6 +3545,7 @@ export type Database = {
         Update: {
           capacidade?: number
           created_at?: string
+          deleted_at?: string | null
           evento_id?: string
           id?: string
           label?: string
@@ -3310,6 +3597,7 @@ export type Database = {
         Row: {
           beneficio_id: string | null
           criado_em: string
+          deleted_at: string | null
           enviado_por: string
           evento_id: string
           id: string
@@ -3320,6 +3608,7 @@ export type Database = {
         Insert: {
           beneficio_id?: string | null
           criado_em?: string
+          deleted_at?: string | null
           enviado_por: string
           evento_id: string
           id?: string
@@ -3330,6 +3619,7 @@ export type Database = {
         Update: {
           beneficio_id?: string | null
           criado_em?: string
+          deleted_at?: string | null
           enviado_por?: string
           evento_id?: string
           id?: string
@@ -3344,6 +3634,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "mais_vanta_config_evento"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mv_convites_especiais_beneficio_id_fkey"
+            columns: ["beneficio_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_evento"
+            referencedColumns: ["config_id"]
+          },
+          {
+            foreignKeyName: "mv_convites_especiais_beneficio_id_fkey"
+            columns: ["beneficio_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["config_id"]
           },
           {
             foreignKeyName: "mv_convites_especiais_enviado_por_fkey"
@@ -3371,6 +3675,7 @@ export type Database = {
       mv_solicitacoes_notificacao: {
         Row: {
           criado_em: string
+          deleted_at: string | null
           evento_id: string
           id: string
           membros_notificados: number | null
@@ -3382,6 +3687,7 @@ export type Database = {
         }
         Insert: {
           criado_em?: string
+          deleted_at?: string | null
           evento_id: string
           id?: string
           membros_notificados?: number | null
@@ -3393,6 +3699,7 @@ export type Database = {
         }
         Update: {
           criado_em?: string
+          deleted_at?: string | null
           evento_id?: string
           id?: string
           membros_notificados?: number | null
@@ -3450,10 +3757,35 @@ export type Database = {
         }
         Relationships: []
       }
+      notif_dispatch_log: {
+        Row: {
+          canal: string
+          contexto_key: string
+          dispatched_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          canal: string
+          contexto_key: string
+          dispatched_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          canal?: string
+          contexto_key?: string
+          dispatched_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notificacoes_posevento: {
         Row: {
           canal: string
           corpo_mensagem: string | null
+          deleted_at: string | null
           enviada_em: string
           evento_id: string
           id: string
@@ -3466,6 +3798,7 @@ export type Database = {
         Insert: {
           canal?: string
           corpo_mensagem?: string | null
+          deleted_at?: string | null
           enviada_em?: string
           evento_id: string
           id?: string
@@ -3478,6 +3811,7 @@ export type Database = {
         Update: {
           canal?: string
           corpo_mensagem?: string | null
+          deleted_at?: string | null
           enviada_em?: string
           evento_id?: string
           id?: string
@@ -3507,30 +3841,42 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string | null
+          deleted_at: string | null
           id: string
           lida: boolean | null
           link: string | null
           mensagem: string
+          push_data: Json | null
+          send_email: boolean
+          send_push: boolean
           tipo: string | null
           titulo: string
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           lida?: boolean | null
           link?: string | null
           mensagem: string
+          push_data?: Json | null
+          send_email?: boolean
+          send_push?: boolean
           tipo?: string | null
           titulo: string
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           lida?: boolean | null
           link?: string | null
           mensagem?: string
+          push_data?: Json | null
+          send_email?: boolean
+          send_push?: boolean
           tipo?: string | null
           titulo?: string
           user_id?: string | null
@@ -3539,10 +3885,10 @@ export type Database = {
       }
       pagamentos_promoter: {
         Row: {
-          cota_id: string
+          cota_id: string | null
           criado_em: string
           data: string
-          evento_id: string
+          evento_id: string | null
           id: string
           observacao: string | null
           promoter_id: string
@@ -3550,10 +3896,10 @@ export type Database = {
           valor: number
         }
         Insert: {
-          cota_id: string
+          cota_id?: string | null
           criado_em?: string
           data?: string
-          evento_id: string
+          evento_id?: string | null
           id?: string
           observacao?: string | null
           promoter_id: string
@@ -3561,10 +3907,10 @@ export type Database = {
           valor: number
         }
         Update: {
-          cota_id?: string
+          cota_id?: string | null
           criado_em?: string
           data?: string
-          evento_id?: string
+          evento_id?: string | null
           id?: string
           observacao?: string | null
           promoter_id?: string
@@ -3770,6 +4116,20 @@ export type Database = {
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "passport_aprovacoes_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "passport_aprovacoes_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
         ]
       }
       pedidos_checkout: {
@@ -3819,6 +4179,7 @@ export type Database = {
           agente_responsavel: string | null
           created_at: string | null
           data_origem: string | null
+          deleted_at: string | null
           dependencias: string[] | null
           descricao: string | null
           grupo: string | null
@@ -3839,6 +4200,7 @@ export type Database = {
           agente_responsavel?: string | null
           created_at?: string | null
           data_origem?: string | null
+          deleted_at?: string | null
           dependencias?: string[] | null
           descricao?: string | null
           grupo?: string | null
@@ -3859,6 +4221,7 @@ export type Database = {
           agente_responsavel?: string | null
           created_at?: string | null
           data_origem?: string | null
+          deleted_at?: string | null
           dependencias?: string[] | null
           descricao?: string | null
           grupo?: string | null
@@ -3895,109 +4258,53 @@ export type Database = {
           prazo_post_horas: number
           preco_avulso: number
           preco_mensal: number
+          stripe_price_id: string | null
           tier_minimo: string
-        }
-        Insert: {
-          acompanhante?: boolean
-          ativo?: boolean
-          atualizado_em?: string | null
-          criado_em?: string | null
-          descricao?: string | null
-          destaque?: boolean
-          dias_castigo?: number
-          id?: string
-          limite_eventos_mv?: number
-          limite_membros?: number
-          limite_vagas_evento?: number
-          nome: string
-          ordem?: number
-          prazo_post_horas?: number
-          preco_avulso?: number
-          preco_mensal?: number
-          tier_minimo?: string
-        }
-        Update: {
-          acompanhante?: boolean
-          ativo?: boolean
-          atualizado_em?: string | null
-          criado_em?: string | null
-          descricao?: string | null
-          destaque?: boolean
-          dias_castigo?: number
-          id?: string
-          limite_eventos_mv?: number
-          limite_membros?: number
-          limite_vagas_evento?: number
-          nome?: string
-          ordem?: number
-          prazo_post_horas?: number
-          preco_avulso?: number
-          preco_mensal?: number
-          tier_minimo?: string
-        }
-        Relationships: []
-      }
-      planos_produtor: {
-        Row: {
-          ativo: boolean
-          atualizado_em: string
-          criado_em: string
-          descricao: string | null
-          id: string
-          limite_eventos_mes: number
-          limite_notificacoes_mes: number
-          limite_resgates_evento: number
-          nome: string
-          ordem: number
-          personalizado_para: string | null
-          preco_evento_extra: number
-          preco_mensal: number
-          preco_notificacao_extra: number
           tiers_acessiveis: string[]
         }
         Insert: {
+          acompanhante?: boolean
           ativo?: boolean
-          atualizado_em?: string
-          criado_em?: string
+          atualizado_em?: string | null
+          criado_em?: string | null
           descricao?: string | null
+          destaque?: boolean
+          dias_castigo?: number
           id?: string
-          limite_eventos_mes?: number
-          limite_notificacoes_mes?: number
-          limite_resgates_evento?: number
+          limite_eventos_mv?: number
+          limite_membros?: number
+          limite_vagas_evento?: number
           nome: string
           ordem?: number
-          personalizado_para?: string | null
-          preco_evento_extra?: number
+          prazo_post_horas?: number
+          preco_avulso?: number
           preco_mensal?: number
-          preco_notificacao_extra?: number
+          stripe_price_id?: string | null
+          tier_minimo?: string
           tiers_acessiveis?: string[]
         }
         Update: {
+          acompanhante?: boolean
           ativo?: boolean
-          atualizado_em?: string
-          criado_em?: string
+          atualizado_em?: string | null
+          criado_em?: string | null
           descricao?: string | null
+          destaque?: boolean
+          dias_castigo?: number
           id?: string
-          limite_eventos_mes?: number
-          limite_notificacoes_mes?: number
-          limite_resgates_evento?: number
+          limite_eventos_mv?: number
+          limite_membros?: number
+          limite_vagas_evento?: number
           nome?: string
           ordem?: number
-          personalizado_para?: string | null
-          preco_evento_extra?: number
+          prazo_post_horas?: number
+          preco_avulso?: number
           preco_mensal?: number
-          preco_notificacao_extra?: number
+          stripe_price_id?: string | null
+          tier_minimo?: string
           tiers_acessiveis?: string[]
         }
-        Relationships: [
-          {
-            foreignKeyName: "planos_produtor_personalizado_para_fkey"
-            columns: ["personalizado_para"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       platform_config: {
         Row: {
@@ -4042,19 +4349,19 @@ export type Database = {
           created_at: string | null
           id: string
           response: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           response: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           response?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -4066,62 +4373,16 @@ export type Database = {
           },
         ]
       }
-      produtor_plano: {
-        Row: {
-          criado_em: string
-          fim: string | null
-          id: string
-          inicio: string
-          plano_id: string
-          produtor_id: string
-          status: string
-        }
-        Insert: {
-          criado_em?: string
-          fim?: string | null
-          id?: string
-          inicio?: string
-          plano_id: string
-          produtor_id: string
-          status?: string
-        }
-        Update: {
-          criado_em?: string
-          fim?: string | null
-          id?: string
-          inicio?: string
-          plano_id?: string
-          produtor_id?: string
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "produtor_plano_plano_id_fkey"
-            columns: ["plano_id"]
-            isOneToOne: false
-            referencedRelation: "planos_produtor"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "produtor_plano_produtor_id_fkey"
-            columns: ["produtor_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       profiles: {
         Row: {
           album_urls: string[]
           avatar_url: string | null
           biografia: string
           cidade: string | null
-          cpf: string | null
+          cpf: string
           created_at: string | null
-          curadoria_concluida: boolean
           data_nascimento: string | null
-          destaque_curadoria: boolean | null
+          deleted_at: string | null
           email: string | null
           estado: string | null
           excluido: boolean | null
@@ -4136,7 +4397,6 @@ export type Database = {
           mood_expires_at: string | null
           mood_text: string | null
           nome: string | null
-          notas_admin: string | null
           pix_chave: string | null
           pix_tipo: string | null
           preferencias: Json | null
@@ -4157,11 +4417,10 @@ export type Database = {
           avatar_url?: string | null
           biografia?: string
           cidade?: string | null
-          cpf?: string | null
+          cpf: string
           created_at?: string | null
-          curadoria_concluida?: boolean
           data_nascimento?: string | null
-          destaque_curadoria?: boolean | null
+          deleted_at?: string | null
           email?: string | null
           estado?: string | null
           excluido?: boolean | null
@@ -4176,7 +4435,6 @@ export type Database = {
           mood_expires_at?: string | null
           mood_text?: string | null
           nome?: string | null
-          notas_admin?: string | null
           pix_chave?: string | null
           pix_tipo?: string | null
           preferencias?: Json | null
@@ -4197,11 +4455,10 @@ export type Database = {
           avatar_url?: string | null
           biografia?: string
           cidade?: string | null
-          cpf?: string | null
+          cpf?: string
           created_at?: string | null
-          curadoria_concluida?: boolean
           data_nascimento?: string | null
-          destaque_curadoria?: boolean | null
+          deleted_at?: string | null
           email?: string | null
           estado?: string | null
           excluido?: boolean | null
@@ -4216,7 +4473,6 @@ export type Database = {
           mood_expires_at?: string | null
           mood_text?: string | null
           nome?: string | null
-          notas_admin?: string | null
           pix_chave?: string | null
           pix_tipo?: string | null
           preferencias?: Json | null
@@ -4300,6 +4556,7 @@ export type Database = {
         Row: {
           auth_key: string | null
           created_at: string
+          deleted_at: string | null
           device_info: string | null
           endpoint: string | null
           fcm_token: string | null
@@ -4311,6 +4568,7 @@ export type Database = {
         Insert: {
           auth_key?: string | null
           created_at?: string
+          deleted_at?: string | null
           device_info?: string | null
           endpoint?: string | null
           fcm_token?: string | null
@@ -4322,6 +4580,7 @@ export type Database = {
         Update: {
           auth_key?: string | null
           created_at?: string
+          deleted_at?: string | null
           device_info?: string | null
           endpoint?: string | null
           fcm_token?: string | null
@@ -4339,6 +4598,7 @@ export type Database = {
           canais: string[]
           criado_em: string
           criado_por: string
+          deleted_at: string | null
           id: string
           mensagem: string
           nome: string
@@ -4351,6 +4611,7 @@ export type Database = {
           canais?: string[]
           criado_em?: string
           criado_por: string
+          deleted_at?: string | null
           id?: string
           mensagem: string
           nome: string
@@ -4363,6 +4624,7 @@ export type Database = {
           canais?: string[]
           criado_em?: string
           criado_por?: string
+          deleted_at?: string | null
           id?: string
           mensagem?: string
           nome?: string
@@ -4419,7 +4681,7 @@ export type Database = {
           socio_decisao_em: string | null
           socio_id: string | null
           solicitado_em: string
-          solicitado_por: string
+          solicitado_por: string | null
           status: string
           stripe_refund_id: string | null
           ticket_id: string
@@ -4448,7 +4710,7 @@ export type Database = {
           socio_decisao_em?: string | null
           socio_id?: string | null
           solicitado_em?: string
-          solicitado_por: string
+          solicitado_por?: string | null
           status?: string
           stripe_refund_id?: string | null
           ticket_id: string
@@ -4477,7 +4739,7 @@ export type Database = {
           socio_decisao_em?: string | null
           socio_id?: string | null
           solicitado_em?: string
-          solicitado_por?: string
+          solicitado_por?: string | null
           status?: string
           stripe_refund_id?: string | null
           ticket_id?: string
@@ -4537,12 +4799,52 @@ export type Database = {
           },
         ]
       }
+      reentradas_mais_vanta: {
+        Row: {
+          criado_em: string
+          decidido_em: string | null
+          decidido_por: string | null
+          expulsao_anterior_em: string | null
+          expulsao_anterior_numero: number | null
+          id: string
+          motivo: string | null
+          motivo_decisao: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          criado_em?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          expulsao_anterior_em?: string | null
+          expulsao_anterior_numero?: number | null
+          id?: string
+          motivo?: string | null
+          motivo_decisao?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          criado_em?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          expulsao_anterior_em?: string | null
+          expulsao_anterior_numero?: number | null
+          id?: string
+          motivo?: string | null
+          motivo_decisao?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       regras_lista: {
         Row: {
           abobora_regra_id: string | null
           area: string | null
           cor: string | null
           created_at: string
+          deleted_at: string | null
           genero: string
           hora_corte: string | null
           id: string
@@ -4558,6 +4860,7 @@ export type Database = {
           area?: string | null
           cor?: string | null
           created_at?: string
+          deleted_at?: string | null
           genero?: string
           hora_corte?: string | null
           id?: string
@@ -4573,6 +4876,7 @@ export type Database = {
           area?: string | null
           cor?: string | null
           created_at?: string
+          deleted_at?: string | null
           genero?: string
           hora_corte?: string | null
           id?: string
@@ -4602,7 +4906,7 @@ export type Database = {
       }
       relatorios_semanais: {
         Row: {
-          comunidade_id: string
+          comunidade_id: string | null
           criado_em: string | null
           dados: Json
           enviado_em: string | null
@@ -4611,7 +4915,7 @@ export type Database = {
           semana_inicio: string
         }
         Insert: {
-          comunidade_id: string
+          comunidade_id?: string | null
           criado_em?: string | null
           dados: Json
           enviado_em?: string | null
@@ -4620,7 +4924,7 @@ export type Database = {
           semana_inicio: string
         }
         Update: {
-          comunidade_id?: string
+          comunidade_id?: string | null
           criado_em?: string | null
           dados?: Json
           enviado_em?: string | null
@@ -4650,6 +4954,20 @@ export type Database = {
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "relatorios_semanais_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "relatorios_semanais_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
         ]
       }
       resgates_mais_vanta: {
@@ -4657,7 +4975,7 @@ export type Database = {
           aplicado_em: string
           checkin_em: string | null
           concluido_em: string | null
-          deal_id: string
+          deal_id: string | null
           id: string
           parceiro_id: string
           post_url: string | null
@@ -4667,13 +4985,13 @@ export type Database = {
           selecionado_em: string | null
           selecionado_por: string | null
           status: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           aplicado_em?: string
           checkin_em?: string | null
           concluido_em?: string | null
-          deal_id: string
+          deal_id?: string | null
           id?: string
           parceiro_id: string
           post_url?: string | null
@@ -4683,13 +5001,13 @@ export type Database = {
           selecionado_em?: string | null
           selecionado_por?: string | null
           status?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           aplicado_em?: string
           checkin_em?: string | null
           concluido_em?: string | null
-          deal_id?: string
+          deal_id?: string | null
           id?: string
           parceiro_id?: string
           post_url?: string | null
@@ -4699,7 +5017,7 @@ export type Database = {
           selecionado_em?: string | null
           selecionado_por?: string | null
           status?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -4727,43 +5045,49 @@ export type Database = {
       }
       resgates_mv_evento: {
         Row: {
-          beneficio_id: string
+          beneficio_id: string | null
           cancelado_em: string | null
-          evento_id: string
+          evento_id: string | null
           id: string
           infraction_registered_em: string | null
           post_deadline_em: string | null
           post_url: string | null
           post_verificado: boolean
+          rating_produtor: number | null
           resgatado_em: string
           status: string
-          user_id: string
+          tier_snapshot: string | null
+          user_id: string | null
         }
         Insert: {
-          beneficio_id: string
+          beneficio_id?: string | null
           cancelado_em?: string | null
-          evento_id: string
+          evento_id?: string | null
           id?: string
           infraction_registered_em?: string | null
           post_deadline_em?: string | null
           post_url?: string | null
           post_verificado?: boolean
+          rating_produtor?: number | null
           resgatado_em?: string
           status?: string
-          user_id: string
+          tier_snapshot?: string | null
+          user_id?: string | null
         }
         Update: {
-          beneficio_id?: string
+          beneficio_id?: string | null
           cancelado_em?: string | null
-          evento_id?: string
+          evento_id?: string | null
           id?: string
           infraction_registered_em?: string | null
           post_deadline_em?: string | null
           post_url?: string | null
           post_verificado?: boolean
+          rating_produtor?: number | null
           resgatado_em?: string
           status?: string
-          user_id?: string
+          tier_snapshot?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -4772,6 +5096,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "mais_vanta_config_evento"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resgates_mv_evento_beneficio_id_fkey"
+            columns: ["beneficio_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_evento"
+            referencedColumns: ["config_id"]
+          },
+          {
+            foreignKeyName: "resgates_mv_evento_beneficio_id_fkey"
+            columns: ["beneficio_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["config_id"]
           },
           {
             foreignKeyName: "resgates_mv_evento_evento_id_fkey"
@@ -4793,6 +5131,7 @@ export type Database = {
         Row: {
           comentario: string | null
           created_at: string
+          deleted_at: string | null
           evento_id: string
           id: string
           rating: number
@@ -4801,6 +5140,7 @@ export type Database = {
         Insert: {
           comentario?: string | null
           created_at?: string
+          deleted_at?: string | null
           evento_id: string
           id?: string
           rating: number
@@ -4809,6 +5149,7 @@ export type Database = {
         Update: {
           comentario?: string | null
           created_at?: string
+          deleted_at?: string | null
           evento_id?: string
           id?: string
           rating?: number
@@ -4827,6 +5168,7 @@ export type Database = {
       site_content: {
         Row: {
           categoria: string | null
+          deleted_at: string | null
           key: string
           label: string | null
           updated_at: string | null
@@ -4835,6 +5177,7 @@ export type Database = {
         }
         Insert: {
           categoria?: string | null
+          deleted_at?: string | null
           key: string
           label?: string | null
           updated_at?: string | null
@@ -4843,6 +5186,7 @@ export type Database = {
         }
         Update: {
           categoria?: string | null
+          deleted_at?: string | null
           key?: string
           label?: string | null
           updated_at?: string | null
@@ -4862,6 +5206,7 @@ export type Database = {
       socios_evento: {
         Row: {
           created_at: string | null
+          deleted_at: string | null
           evento_id: string
           historico_propostas: Json | null
           id: string
@@ -4877,6 +5222,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          deleted_at?: string | null
           evento_id: string
           historico_propostas?: Json | null
           id?: string
@@ -4892,6 +5238,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          deleted_at?: string | null
           evento_id?: string
           historico_propostas?: Json | null
           id?: string
@@ -5006,6 +5353,7 @@ export type Database = {
           comunidade_criada_id: string | null
           criado_em: string
           dados_comunidade: Json | null
+          deleted_at: string | null
           email_contato: string | null
           estilos: string[] | null
           fotos: string[] | null
@@ -5039,6 +5387,7 @@ export type Database = {
           comunidade_criada_id?: string | null
           criado_em?: string
           dados_comunidade?: Json | null
+          deleted_at?: string | null
           email_contato?: string | null
           estilos?: string[] | null
           fotos?: string[] | null
@@ -5072,6 +5421,7 @@ export type Database = {
           comunidade_criada_id?: string | null
           criado_em?: string
           dados_comunidade?: Json | null
+          deleted_at?: string | null
           email_contato?: string | null
           estilos?: string[] | null
           fotos?: string[] | null
@@ -5122,6 +5472,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "comunidades_publico"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_parceria_comunidade_criada_id_fkey"
+            columns: ["comunidade_criada_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "solicitacoes_parceria_comunidade_criada_id_fkey"
+            columns: ["comunidade_criada_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
           },
           {
             foreignKeyName: "solicitacoes_parceria_user_id_fkey"
@@ -5280,6 +5644,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "splits_config_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "splits_config_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
             foreignKeyName: "splits_config_criado_por_fkey"
             columns: ["criado_por"]
             isOneToOne: false
@@ -5294,6 +5672,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stripe_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          received_at: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          received_at?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          received_at?: string
+        }
+        Relationships: []
       }
       tickets_caixa: {
         Row: {
@@ -5314,6 +5710,7 @@ export type Database = {
           owner_id: string | null
           selfie_url: string | null
           status: string
+          transfer_policy: string
           usado_em: string | null
           usado_por: string | null
           utm_source: string | null
@@ -5342,6 +5739,7 @@ export type Database = {
           owner_id?: string | null
           selfie_url?: string | null
           status?: string
+          transfer_policy?: string
           usado_em?: string | null
           usado_por?: string | null
           utm_source?: string | null
@@ -5370,6 +5768,7 @@ export type Database = {
           owner_id?: string | null
           selfie_url?: string | null
           status?: string
+          transfer_policy?: string
           usado_em?: string | null
           usado_por?: string | null
           utm_source?: string | null
@@ -5455,6 +5854,8 @@ export type Database = {
         Row: {
           comprador_id: string | null
           created_at: string
+          cupom_codigo: string | null
+          desconto_cupom_valor: number | null
           email: string
           evento_id: string
           id: string
@@ -5468,6 +5869,8 @@ export type Database = {
         Insert: {
           comprador_id?: string | null
           created_at?: string
+          cupom_codigo?: string | null
+          desconto_cupom_valor?: number | null
           email: string
           evento_id: string
           id?: string
@@ -5481,6 +5884,8 @@ export type Database = {
         Update: {
           comprador_id?: string | null
           created_at?: string
+          cupom_codigo?: string | null
+          desconto_cupom_valor?: number | null
           email?: string
           evento_id?: string
           id?: string
@@ -5520,6 +5925,7 @@ export type Database = {
           id: string
           remetente_id: string
           remetente_nome: string
+          requer_comprovante: boolean
           status: string
           ticket_id: string
           titulo_evento: string | null
@@ -5536,6 +5942,7 @@ export type Database = {
           id?: string
           remetente_id: string
           remetente_nome: string
+          requer_comprovante?: boolean
           status?: string
           ticket_id: string
           titulo_evento?: string | null
@@ -5552,6 +5959,7 @@ export type Database = {
           id?: string
           remetente_id?: string
           remetente_nome?: string
+          requer_comprovante?: boolean
           status?: string
           ticket_id?: string
           titulo_evento?: string | null
@@ -5578,7 +5986,7 @@ export type Database = {
         Row: {
           action_type: string
           created_at: string
-          event_id: string
+          event_id: string | null
           id: string
           metadata: Json | null
           user_id: string
@@ -5586,7 +5994,7 @@ export type Database = {
         Insert: {
           action_type: string
           created_at?: string
-          event_id: string
+          event_id?: string | null
           id?: string
           metadata?: Json | null
           user_id: string
@@ -5594,7 +6002,7 @@ export type Database = {
         Update: {
           action_type?: string
           created_at?: string
-          event_id?: string
+          event_id?: string | null
           id?: string
           metadata?: Json | null
           user_id?: string
@@ -5612,26 +6020,41 @@ export type Database = {
       user_consents: {
         Row: {
           aceito_em: string
+          deleted_at: string | null
+          document_checksum: string | null
           documento_tipo: string
           documento_versao: number
+          fonte: string | null
           id: string
           ip_address: string | null
+          metadata: Json
+          user_agent: string | null
           user_id: string
         }
         Insert: {
           aceito_em?: string
+          deleted_at?: string | null
+          document_checksum?: string | null
           documento_tipo: string
           documento_versao: number
+          fonte?: string | null
           id?: string
           ip_address?: string | null
+          metadata?: Json
+          user_agent?: string | null
           user_id: string
         }
         Update: {
           aceito_em?: string
+          deleted_at?: string | null
+          document_checksum?: string | null
           documento_tipo?: string
           documento_versao?: number
+          fonte?: string | null
           id?: string
           ip_address?: string | null
+          metadata?: Json
+          user_agent?: string | null
           user_id?: string
         }
         Relationships: [
@@ -5653,6 +6076,7 @@ export type Database = {
           badge: string
           criado_em: string
           criado_por: string | null
+          deleted_at: string | null
           id: string
           imagem: string | null
           img_position: string | null
@@ -5670,6 +6094,7 @@ export type Database = {
           badge?: string
           criado_em?: string
           criado_por?: string | null
+          deleted_at?: string | null
           id?: string
           imagem?: string | null
           img_position?: string | null
@@ -5687,6 +6112,7 @@ export type Database = {
           badge?: string
           criado_em?: string
           criado_por?: string | null
+          deleted_at?: string | null
           id?: string
           imagem?: string | null
           img_position?: string | null
@@ -5736,11 +6162,14 @@ export type Database = {
           area: string
           area_custom: string | null
           created_at: string
+          deleted_at: string | null
           genero: string
           id: string
           limite: number
           lote_id: string
           requer_comprovante: boolean
+          tier_minimo: string | null
+          tipo_beneficio_mv: string | null
           tipo_comprovante: string | null
           valor: number
           vendidos: number
@@ -5749,11 +6178,14 @@ export type Database = {
           area?: string
           area_custom?: string | null
           created_at?: string
+          deleted_at?: string | null
           genero?: string
           id?: string
           limite?: number
           lote_id: string
           requer_comprovante?: boolean
+          tier_minimo?: string | null
+          tipo_beneficio_mv?: string | null
           tipo_comprovante?: string | null
           valor?: number
           vendidos?: number
@@ -5762,11 +6194,14 @@ export type Database = {
           area?: string
           area_custom?: string | null
           created_at?: string
+          deleted_at?: string | null
           genero?: string
           id?: string
           limite?: number
           lote_id?: string
           requer_comprovante?: boolean
+          tier_minimo?: string | null
+          tipo_beneficio_mv?: string | null
           tipo_comprovante?: string | null
           valor?: number
           vendidos?: number
@@ -5784,7 +6219,7 @@ export type Database = {
       vendas_log: {
         Row: {
           criado_em: string | null
-          evento_id: string
+          evento_id: string | null
           id: string
           origem: string
           produtor_id: string | null
@@ -5795,7 +6230,7 @@ export type Database = {
         }
         Insert: {
           criado_em?: string | null
-          evento_id: string
+          evento_id?: string | null
           id?: string
           origem?: string
           produtor_id?: string | null
@@ -5806,7 +6241,7 @@ export type Database = {
         }
         Update: {
           criado_em?: string | null
-          evento_id?: string
+          evento_id?: string | null
           id?: string
           origem?: string
           produtor_id?: string | null
@@ -5835,6 +6270,7 @@ export type Database = {
       waitlist: {
         Row: {
           created_at: string | null
+          deleted_at: string | null
           email: string
           evento_id: string
           id: string
@@ -5844,6 +6280,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          deleted_at?: string | null
           email: string
           evento_id: string
           id?: string
@@ -5853,6 +6290,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          deleted_at?: string | null
           email?: string
           evento_id?: string
           id?: string
@@ -5876,6 +6314,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wallet_pin_lockouts: {
+        Row: {
+          day_lockout_count: number
+          day_window_start: string | null
+          fail_count: number
+          fail_window_start: string | null
+          locked_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          day_lockout_count?: number
+          day_window_start?: string | null
+          fail_count?: number
+          fail_window_start?: string | null
+          locked_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          day_lockout_count?: number
+          day_window_start?: string | null
+          fail_count?: number
+          fail_window_start?: string | null
+          locked_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -6095,6 +6563,315 @@ export type Database = {
         }
         Relationships: []
       }
+      hq_v2_briefings_gerados_view: {
+        Row: {
+          briefing_final_md: string | null
+          card_id: string | null
+          contexto_real_jsonb: Json | null
+          copiado_em: string | null
+          criado_em: string | null
+          entregue_em: string | null
+          id: string | null
+          refazer_motivo: string | null
+          setor_slug: string | null
+          status:
+            | "gerado"
+            | "copiado"
+            | "em_execucao"
+            | "entregue"
+            | "refazer"
+            | "arquivado"
+            | null
+          texto_livre: string | null
+        }
+        Insert: {
+          briefing_final_md?: string | null
+          card_id?: string | null
+          contexto_real_jsonb?: Json | null
+          copiado_em?: string | null
+          criado_em?: string | null
+          entregue_em?: string | null
+          id?: string | null
+          refazer_motivo?: string | null
+          setor_slug?: string | null
+          status?:
+            | "gerado"
+            | "copiado"
+            | "em_execucao"
+            | "entregue"
+            | "refazer"
+            | "arquivado"
+            | null
+          texto_livre?: string | null
+        }
+        Update: {
+          briefing_final_md?: string | null
+          card_id?: string | null
+          contexto_real_jsonb?: Json | null
+          copiado_em?: string | null
+          criado_em?: string | null
+          entregue_em?: string | null
+          id?: string | null
+          refazer_motivo?: string | null
+          setor_slug?: string | null
+          status?:
+            | "gerado"
+            | "copiado"
+            | "em_execucao"
+            | "entregue"
+            | "refazer"
+            | "arquivado"
+            | null
+          texto_livre?: string | null
+        }
+        Relationships: []
+      }
+      hq_v2_cards_view: {
+        Row: {
+          ativo: boolean | null
+          id: string | null
+          o_que_entrega: string | null
+          ordem: number | null
+          quando_usar: string | null
+          query_contexto_jsonb: Json | null
+          setor_slug: string | null
+          template_briefing_md: string | null
+          titulo: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          id?: string | null
+          o_que_entrega?: string | null
+          ordem?: number | null
+          quando_usar?: string | null
+          query_contexto_jsonb?: Json | null
+          setor_slug?: string | null
+          template_briefing_md?: string | null
+          titulo?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          id?: string | null
+          o_que_entrega?: string | null
+          ordem?: number | null
+          quando_usar?: string | null
+          query_contexto_jsonb?: Json | null
+          setor_slug?: string | null
+          template_briefing_md?: string | null
+          titulo?: string | null
+        }
+        Relationships: []
+      }
+      hq_v2_setores_view: {
+        Row: {
+          ativo: boolean | null
+          funcao: string | null
+          id: string | null
+          nome: string | null
+          ordem: number | null
+          slug: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          funcao?: string | null
+          id?: string | null
+          nome?: string | null
+          ordem?: number | null
+          slug?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          funcao?: string | null
+          id?: string | null
+          nome?: string | null
+          ordem?: number | null
+          slug?: string | null
+        }
+        Relationships: []
+      }
+      mv_alcance_comunidade: {
+        Row: {
+          alcance_automatico_total: number | null
+          alcance_boost_total: number | null
+          alcance_total: number | null
+          comunidade_id: string | null
+          comunidade_nome: string | null
+          configs_ativos: number | null
+        }
+        Relationships: []
+      }
+      mv_alcance_evento: {
+        Row: {
+          alcance_automatico: number | null
+          alcance_boost: number | null
+          alcance_total: number | null
+          config_id: string | null
+          evento_id: string | null
+          evento_nome: string | null
+          tier_minimo: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mais_vanta_lotes_evento_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos_admin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mv_resgate_performance: {
+        Row: {
+          comunidade_id: string | null
+          comunidade_nome: string | null
+          comunidade_slug: string | null
+          config_id: string | null
+          data_inicio: string | null
+          evento_id: string | null
+          evento_nome: string | null
+          horas_ate_evento: number | null
+          pct_resgate: number | null
+          status: string | null
+          tier_minimo: string | null
+          tipo_beneficio: string | null
+          vagas_limite: number | null
+          vagas_resgatadas: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mais_vanta_lotes_evento_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos_admin"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mv_resgates_recentes_comunidade: {
+        Row: {
+          comunidade_id: string | null
+          evento_data: string | null
+          evento_id: string | null
+          evento_nome: string | null
+          membro_avatar: string | null
+          membro_nome: string | null
+          rating_produtor: number | null
+          resgatado_em: string | null
+          resgate_id: string | null
+          status: string | null
+          tier_snapshot: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades_publico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "resgates_mv_evento_evento_id_fkey"
+            columns: ["evento_id"]
+            isOneToOne: false
+            referencedRelation: "eventos_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resgates_mv_evento_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mv_top_frequentadores_comunidade: {
+        Row: {
+          comunidade_id: string | null
+          membro_avatar: string | null
+          membro_nome: string | null
+          negativos: number | null
+          positivos: number | null
+          rating_score: number | null
+          resgates_cancelados: number | null
+          total_resgates: number | null
+          ultimo_resgate: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades_admin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades_publico"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_alcance_comunidade"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "eventos_admin_comunidade_id_fkey"
+            columns: ["comunidade_id"]
+            isOneToOne: false
+            referencedRelation: "mv_resgate_performance"
+            referencedColumns: ["comunidade_id"]
+          },
+          {
+            foreignKeyName: "resgates_mv_evento_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       aceitar_convite_mv: { Args: { p_token: string }; Returns: Json }
@@ -6107,6 +6884,152 @@ export type Database = {
       admin_chargeback_insert: {
         Args: { p_gateway_ref?: string; p_motivo?: string; p_ticket_id: string }
         Returns: Json
+      }
+      admin_evento_demografico: { Args: { p_evento_id: string }; Returns: Json }
+      admin_get_profiles_bulk: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          avatar_url: string
+          cidade: string
+          email: string
+          id: string
+          nome: string
+          role: string
+          telefone_ddd: string
+          telefone_numero: string
+        }[]
+      }
+      admin_list_comunidades: {
+        Args: { p_limit?: number }
+        Returns: {
+          ativa: boolean
+          capacidade_max: number
+          cargos_customizados: Json
+          cep: string
+          cidade: string
+          cnpj: string
+          condicoes_aceitas_em: string
+          condicoes_status: string
+          coords: Json
+          cota_cortesias: number
+          cota_nomes_lista: number
+          created_at: string
+          created_by: string
+          descricao: string
+          dono_id: string
+          endereco: string
+          estado: string
+          evento_privado_ativo: boolean
+          evento_privado_atracoes: Json
+          evento_privado_faixas_capacidade: Json
+          evento_privado_formatos: Json
+          evento_privado_fotos: Json
+          evento_privado_texto: string
+          foto: string
+          foto_capa: string
+          gateway_fee_mode: string
+          horario_funcionamento: Json
+          horario_overrides: Json
+          id: string
+          instagram: string
+          limite_notificacoes_mes: number
+          nome: string
+          onboarding_completo: boolean
+          razao_social: string
+          site: string
+          slug: string
+          taxa_cortesia_excedente_pct: number
+          taxa_minima: number
+          taxa_nome_excedente: number
+          taxa_porta_percent: number
+          taxa_processamento_percent: number
+          telefone: string
+          tier_minimo_mais_vanta: string
+          tiktok: string
+          tipo_comunidade: string
+          updated_at: string
+          vanta_fee_fixed: number
+          vanta_fee_percent: number
+          vanta_fee_repasse_percent: number
+          whatsapp: string
+        }[]
+      }
+      admin_list_eventos_recentes: {
+        Args: { p_cutoff?: string; p_limit?: number }
+        Returns: {
+          caixa_ativo: boolean
+          cancelamento_etapa: string
+          cancelamento_motivo: string
+          cancelamento_solicitado_por: string
+          categoria: string
+          cidade: string
+          classificacao_etaria: string
+          codigo_afiliado: string
+          comissao_vanta: number
+          comunidade_id: string
+          coords: Json
+          cota_cortesias: number
+          cota_nomes_lista: number
+          created_at: string
+          created_by: string
+          custos_fixos: number
+          data_fim: string
+          data_inicio: string
+          deleted_at: string
+          descricao: string
+          edicao_motivo: string
+          edicao_pendente: Json
+          edicao_status: string
+          endereco: string
+          estilos: string[]
+          evento_origem_id: string
+          experiencias: string[]
+          formato: string
+          foto: string
+          gateway_fee_mode: string
+          id: string
+          idade_minima: number
+          link_externo: string
+          local: string
+          mesas_ativo: boolean
+          motivo_rejeicao: string
+          mv_avaliacao: string
+          nome: string
+          permissoes_produtor: string[]
+          planta_mesas: string
+          plataforma_externa: string
+          politica_reembolso: string
+          prazo_pagamento_dias: number
+          prazo_reembolso_dias: number
+          proposta_mensagem: string
+          proposta_rodada: number
+          proposta_status: string
+          publicado: boolean
+          quem_paga_servico: string
+          recorrencia: string
+          recorrencia_ate: string
+          rejeicao_campos: Json
+          rodada_negociacao: number
+          rodada_rejeicao: number
+          slug: string
+          socio_convidado_id: string
+          split_produtor: number
+          split_socio: number
+          status_evento: string
+          subcategorias: string[]
+          taxa_cortesia_excedente_pct: number
+          taxa_fixa_evento: number
+          taxa_minima: number
+          taxa_nome_excedente: number
+          taxa_override: number
+          taxa_porta_percent: number
+          taxa_processamento_percent: number
+          tipo_fluxo: string
+          updated_at: string
+          vanta_fee_fixed: number
+          vanta_fee_percent: number
+          venda_vanta: boolean
+        }[]
       }
       admin_manage_user: {
         Args: { p_action: string; p_user_id: string; p_value?: string }
@@ -6208,6 +7131,17 @@ export type Database = {
         }
         Returns: Json
       }
+      admin_search_profiles: {
+        Args: { p_limit?: number; p_q: string }
+        Returns: {
+          avatar_url: string
+          cidade: string
+          email: string
+          id: string
+          nome: string
+          role: string
+        }[]
+      }
       admin_ticket_write:
         | {
             Args: {
@@ -6243,6 +7177,10 @@ export type Database = {
             Returns: Json
           }
       anonimizar_conta: { Args: never; Returns: undefined }
+      ativar_mv_evento: {
+        Args: { p_beneficios: Json; p_evento_id: string }
+        Returns: Json
+      }
       atualizar_eventos_teste: { Args: never; Returns: undefined }
       atualizar_username: { Args: { p_username: string }; Returns: Json }
       buscar_membros: {
@@ -6270,6 +7208,7 @@ export type Database = {
         Args: { p_key: string; p_max?: number; p_window_seconds?: number }
         Returns: boolean
       }
+      check_wallet_pin_allowed: { Args: { p_user_id: string }; Returns: Json }
       checkout_gratuito: {
         Args: { p_comprador_id: string; p_email?: string; p_evento_id: string }
         Returns: Json
@@ -6280,6 +7219,13 @@ export type Database = {
           cidade: string
           foto_destaque: string
           total_eventos: number
+        }[]
+      }
+      cleanup_telemetry_internal: {
+        Args: never
+        Returns: {
+          cron_deleted: number
+          pg_net_deleted: number
         }[]
       }
       create_connect_account: {
@@ -6303,6 +7249,7 @@ export type Database = {
         }
         Returns: Json
       }
+      custom_access_token_hook: { Args: { event: Json }; Returns: Json }
       dashboard_community_kpis: {
         Args: { p_comunidade_id: string }
         Returns: {
@@ -6382,6 +7329,7 @@ export type Database = {
           custos_fixos: number | null
           data_fim: string | null
           data_inicio: string
+          deleted_at: string | null
           descricao: string
           edicao_motivo: string | null
           edicao_pendente: Json | null
@@ -6463,6 +7411,24 @@ export type Database = {
         Returns: number
       }
       get_admin_access: { Args: { p_user_id: string }; Returns: Json }
+      get_comunidades_cargos_customizados: {
+        Args: never
+        Returns: {
+          cargos_customizados: Json
+          id: string
+        }[]
+      }
+      get_cron_status: {
+        Args: { p_job_names: string[] }
+        Returns: {
+          failures_24h: number
+          job_name: string
+          last_failure: string
+          last_return_message: string
+          last_start: string
+          last_status: string
+        }[]
+      }
       get_evento_from_lista: { Args: { p_lista_id: string }; Returns: string }
       get_evento_from_lote: { Args: { p_lote_id: string }; Returns: string }
       get_eventos_por_regiao: {
@@ -6486,6 +7452,7 @@ export type Database = {
           custos_fixos: number | null
           data_fim: string | null
           data_inicio: string
+          deleted_at: string | null
           descricao: string
           edicao_motivo: string | null
           edicao_pendente: Json | null
@@ -6558,7 +7525,135 @@ export type Database = {
           total_vendidos: number
         }[]
       }
+      get_own_preferencias: { Args: never; Returns: Json }
+      get_own_profile: {
+        Args: never
+        Returns: {
+          album_urls: string[]
+          avatar_url: string
+          biografia: string
+          cidade: string
+          cpf: string
+          data_nascimento: string
+          email: string
+          estado: string
+          genero: string
+          id: string
+          instagram: string
+          instagram_followers: number
+          interesses: string[]
+          nome: string
+          privacidade: Json
+          role: string
+          telefone_ddd: string
+          telefone_numero: string
+          username: string
+        }[]
+      }
+      get_public_event_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          categoria: string
+          cidade: string
+          classificacao_etaria: string
+          comunidade_id: string
+          coords: Json
+          data_fim: string
+          data_inicio: string
+          descricao: string
+          endereco: string
+          estilos: string[]
+          foto: string
+          id: string
+          local: string
+          lotes: Json
+          mais_vanta_config_evento: Json
+          nome: string
+          publicado: boolean
+          slug: string
+          status_evento: string
+        }[]
+      }
+      get_public_events_optimized: {
+        Args: { p_cidade?: string; p_limit?: number; p_offset?: number }
+        Returns: {
+          categoria: string
+          cidade: string
+          classificacao_etaria: string
+          comunidade_id: string
+          coords: Json
+          data_fim: string
+          data_inicio: string
+          descricao: string
+          endereco: string
+          estilos: string[]
+          foto: string
+          id: string
+          local: string
+          lotes: Json
+          mais_vanta_config_evento: Json
+          nome: string
+          publicado: boolean
+          slug: string
+          status_evento: string
+        }[]
+      }
       get_saldo_financeiro: { Args: { p_evento_id: string }; Returns: Json }
+      get_server_timestamp: { Args: never; Returns: string }
+      get_ticket_receipt: {
+        Args: { p_ticket_id: string }
+        Returns: {
+          comunidade_id: string
+          comunidade_nome: string
+          cpf_titular: string
+          cupom_codigo: string
+          desconto_cupom_valor: number
+          email: string
+          evento_cidade: string
+          evento_data_fim: string
+          evento_data_inicio: string
+          evento_id: string
+          evento_local: string
+          evento_nome: string
+          lote_label: string
+          metodo_pagamento: string
+          nome_titular: string
+          pedido_id: string
+          taxa_aplicada: number
+          ticket_criado_em: string
+          ticket_id: string
+          ticket_status: string
+          transaction_created_at: string
+          transaction_id: string
+          transaction_status: string
+          transaction_tipo: string
+          valor_bruto: number
+          valor_liquido: number
+          valor_ticket: number
+          variacao_label: string
+        }[]
+      }
+      get_user_eventos_confirmados: {
+        Args: { p_limit?: number; p_only_future?: boolean; p_user_id: string }
+        Returns: {
+          cidade: string
+          comunidade_foto: string
+          comunidade_id: string
+          comunidade_nome: string
+          data_fim: string
+          data_inicio: string
+          evento_id: string
+          foto: string
+          local: string
+          nome: string
+          status_evento: string
+          ticket_status: string
+        }[]
+      }
+      has_analytics_access: {
+        Args: { p_community_id?: string; p_event_id?: string }
+        Returns: boolean
+      }
       has_comunidade_access: {
         Args: { p_comunidade_id: string }
         Returns: boolean
@@ -6567,11 +7662,59 @@ export type Database = {
         Args: { p_tenant_id: string; p_tenant_type: string }
         Returns: boolean
       }
+      has_cortesias_access: { Args: { p_event_id: string }; Returns: boolean }
+      has_cupons_access: {
+        Args: { p_community_id?: string; p_event_id?: string }
+        Returns: boolean
+      }
       has_evento_access: { Args: { p_evento_id: string }; Returns: boolean }
       has_plataforma_permission: {
         Args: { p_permissao: string }
         Returns: boolean
       }
+      has_wallet_pin: { Args: never; Returns: boolean }
+      hq_recalcular_feature_analysis: { Args: never; Returns: Json }
+      hq_v2_briefing_criar: {
+        Args: {
+          p_briefing_final_md?: string
+          p_card_id?: string
+          p_contexto_real_jsonb?: Json
+          p_setor_slug: string
+          p_texto_livre?: string
+        }
+        Returns: unknown
+        SetofOptions: {
+          from: "*"
+          to: "briefings_gerados"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      hq_v2_briefing_marcar_copiado: {
+        Args: { p_briefing_id: string }
+        Returns: unknown
+        SetofOptions: {
+          from: "*"
+          to: "briefings_gerados"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      hq_v2_cifrar_dump_base64: {
+        Args: { payload_b64: string }
+        Returns: string
+      }
+      hq_v2_decifrar_dump_base64: {
+        Args: { cifrado_b64: string }
+        Returns: string
+      }
+      hq_v2_listar_tabelas_public: {
+        Args: never
+        Returns: {
+          tabela: string
+        }[]
+      }
+      hq_v2_q_eventos_proximas_48h: { Args: never; Returns: Json }
       incrementar_usos_cupom: { Args: { cupom_id: string }; Returns: undefined }
       incrementar_usos_cupom_por_codigo: {
         Args: { p_codigo: string; p_evento_id: string }
@@ -6581,25 +7724,310 @@ export type Database = {
         Args: {
           p_link?: string
           p_mensagem: string
+          p_push_data?: Json
+          p_send_email?: boolean
+          p_send_push?: boolean
           p_tipo: string
           p_titulo: string
           p_user_id: string
         }
         Returns: string
       }
+      is_comunidade_creator: {
+        Args: { p_comunidade_id: string }
+        Returns: boolean
+      }
+      is_comunidade_gerente_via_evento: {
+        Args: { p_evento_id: string }
+        Returns: boolean
+      }
+      is_comunidade_owner: {
+        Args: { p_comunidade_id: string }
+        Returns: boolean
+      }
+      is_comunidade_team: {
+        Args: { p_comunidade_id: string }
+        Returns: boolean
+      }
       is_event_manager_or_admin: {
         Args: { p_evento_id: string }
         Returns: boolean
       }
       is_event_team_member: { Args: { p_evento_id: string }; Returns: boolean }
+      is_evento_creator: { Args: { p_evento_id: string }; Returns: boolean }
+      is_friend: { Args: { uid_a: string; uid_b: string }; Returns: boolean }
       is_masteradm: { Args: never; Returns: boolean }
       is_membro_clube: { Args: { check_user_id: string }; Returns: boolean }
+      is_parceiro_owner: { Args: { p_parceiro_id: string }; Returns: boolean }
       is_produtor_evento: { Args: { p_evento_id: string }; Returns: boolean }
       is_tenant_member: {
         Args: { p_cargos: string[]; p_tenant_id: string; p_tenant_type: string }
         Returns: boolean
       }
+      is_valid_cpf: { Args: { p_cpf: string }; Returns: boolean }
+      is_valid_ddd: { Args: { p_ddd: string }; Returns: boolean }
+      is_valid_telefone_numero: { Args: { p_numero: string }; Returns: boolean }
       liberar_mesa: { Args: { p_mesa_id: string }; Returns: undefined }
+      mv_aprovar_reentrada: {
+        Args: {
+          p_decisao: string
+          p_motivo_decisao?: string
+          p_reentrada_id: string
+        }
+        Returns: undefined
+      }
+      mv_boost_notify: {
+        Args: { p_config_id: string; p_filtros?: Json }
+        Returns: Json
+      }
+      mv_cancelar_assinatura: {
+        Args: { p_assinatura_id: string }
+        Returns: Json
+      }
+      mv_get_all_membros_admin: {
+        Args: never
+        Returns: {
+          alcance: string | null
+          aprovado_em: string
+          aprovado_por: string
+          ativo: boolean
+          banido_em: string | null
+          banido_permanente: boolean | null
+          bloqueio_ate: string | null
+          bloqueio_nivel: number | null
+          castigo_ate: string | null
+          castigo_motivo: string | null
+          categoria: string | null
+          cidade_base: string | null
+          cidade_principal: string | null
+          cidades_ativas: string[] | null
+          comunidade_origem: string | null
+          convidado_por: string | null
+          convites_disponiveis: number | null
+          convites_usados: number | null
+          creator_sublevel: string | null
+          expulsoes_total: number
+          genero: string | null
+          id: string
+          instagram_handle: string | null
+          instagram_seguidores: number | null
+          instagram_verificado: boolean | null
+          instagram_verificado_em: string | null
+          interesses: string[] | null
+          meta_user_id: string | null
+          nota_engajamento: number | null
+          nota_interna: string | null
+          status: string
+          tags: string[] | null
+          tier: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "membros_clube"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      mv_get_all_parceiros_admin: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          cidade_id: string
+          contato_email: string | null
+          contato_nome: string | null
+          contato_telefone: string | null
+          coords: Json | null
+          criado_em: string
+          criado_por: string
+          descricao: string | null
+          endereco: string | null
+          foto_url: string | null
+          id: string
+          instagram_handle: string | null
+          nome: string
+          plano: string
+          plano_fim: string | null
+          plano_inicio: string | null
+          resgates_mes_limite: number
+          resgates_mes_usados: number
+          tipo: string
+          trial_ativo: boolean
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "parceiros_mais_vanta"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      mv_get_all_passports_admin: {
+        Args: never
+        Returns: {
+          cidade: string | null
+          comunidade_id: string | null
+          id: string
+          resolvido_em: string | null
+          resolvido_por: string | null
+          solicitado_em: string
+          status: string
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "passport_aprovacoes"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      mv_get_all_solicitacoes_admin: {
+        Args: never
+        Returns: {
+          balde_sugerido: string | null
+          cidade: string | null
+          codigo_verificacao: string | null
+          como_conheceu: string | null
+          convidado_por: string | null
+          convite_id: string | null
+          criado_em: string
+          frequencia: string | null
+          id: string
+          indicado_por: string | null
+          instagram_handle: string
+          instagram_seguidores: number | null
+          instagram_verificado: boolean | null
+          instagram_verificado_em: string | null
+          profissao: string | null
+          resolvido_em: string | null
+          resolvido_por: string | null
+          status: string
+          tier_atribuido: string | null
+          tier_pre_atribuido: string | null
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "solicitacoes_clube"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      mv_get_all_tiers_admin: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          beneficios: string[]
+          cor: string
+          criado_em: string | null
+          id: string
+          limite_mensal: number
+          nome: string
+          ordem: number
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "tiers_mais_vanta"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      mv_get_beneficio_detail: {
+        Args: { p_evento_id: string }
+        Returns: {
+          config_id: string
+          desconto_percentual: number
+          formato_entrada: string
+          tipo: string
+          vagas_restantes: number
+        }[]
+      }
+      mv_get_best_desconto_evento: {
+        Args: { p_evento_id: string }
+        Returns: number
+      }
+      mv_get_config_evento_admin: {
+        Args: { p_evento_id: string }
+        Returns: {
+          ativo: boolean
+          created_at: string
+          creator_sublevel_minimo: string | null
+          deleted_at: string | null
+          desconto_percentual: number | null
+          evento_id: string
+          formato_entrada: string
+          id: string
+          lista_id: string | null
+          lote_id: string | null
+          obrigacoes: Json
+          tier_minimo: string
+          tipo: string
+          vagas_limite: number | null
+          vagas_resgatadas: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "mais_vanta_config_evento"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      mv_get_eventos_elegiveis: {
+        Args: never
+        Returns: {
+          config_id: string
+          desconto_percentual: number
+          evento_id: string
+          formato_entrada: string
+          tipo: string
+          vagas_restantes: number
+        }[]
+      }
+      mv_get_membro_self: { Args: never; Returns: Json }
+      mv_get_parceiro_admin: {
+        Args: { p_id: string }
+        Returns: {
+          ativo: boolean
+          cidade_id: string
+          contato_email: string | null
+          contato_nome: string | null
+          contato_telefone: string | null
+          coords: Json | null
+          criado_em: string
+          criado_por: string
+          descricao: string | null
+          endereco: string | null
+          foto_url: string | null
+          id: string
+          instagram_handle: string | null
+          nome: string
+          plano: string
+          plano_fim: string | null
+          plano_inicio: string | null
+          resgates_mes_limite: number
+          resgates_mes_usados: number
+          tipo: string
+          trial_ativo: boolean
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "parceiros_mais_vanta"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      mv_get_tier_user: { Args: { p_user_id: string }; Returns: string }
+      mv_is_membro: { Args: { p_user_id: string }; Returns: boolean }
+      mv_pedir_reentrada: { Args: { p_motivo?: string }; Returns: string }
+      mv_rate_membro_resgate: {
+        Args: { p_rating: number; p_resgate_id: string }
+        Returns: undefined
+      }
+      mv_run_alert_performance: { Args: never; Returns: number }
+      mv_run_lembrete_renovacao: { Args: never; Returns: number }
+      mv_run_relatorio_mensal: { Args: never; Returns: number }
+      mv_run_upsell_automatico: { Args: never; Returns: number }
       notificar_lembrete_reserva_mv: { Args: never; Returns: undefined }
       parceiros_por_cidade: {
         Args: { p_cidade: string; p_limit?: number; p_offset?: number }
@@ -6609,34 +8037,37 @@ export type Database = {
           foto: string
           id: string
           nome: string
+          slug: string
           tipo_comunidade: string
         }[]
       }
-      processar_compra_checkout:
-        | {
-            Args: {
-              p_comprador_id?: string
-              p_email: string
-              p_evento_id: string
-              p_lote_id: string
-              p_quantidade?: number
-              p_ref_code?: string
-              p_taxa?: number
-              p_valor_unit: number
-              p_variacao_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_evento_id: string
-              p_quantidade?: number
-              p_user_id: string
-            }
-            Returns: {
-              ingresso_id: string
-            }[]
-          }
+      processar_compra_checkout: {
+        Args: {
+          p_comprador_id?: string
+          p_email: string
+          p_evento_id: string
+          p_lote_id: string
+          p_mv_desconto_aplicado?: boolean
+          p_quantidade?: number
+          p_ref_code?: string
+          p_taxa?: number
+          p_valor_unit: number
+          p_variacao_id: string
+        }
+        Returns: Json
+      }
+      processar_compra_free_batch: {
+        Args: {
+          p_comprador_id?: string
+          p_cupom_codigo?: string
+          p_email: string
+          p_evento_id: string
+          p_itens: Json
+          p_lote_id: string
+          p_ref_code?: string
+        }
+        Returns: Json
+      }
       processar_venda_caixa:
         | {
             Args: {
@@ -6669,14 +8100,42 @@ export type Database = {
         }
         Returns: Json
       }
+      rbac_cargo_rank: { Args: { p_cargo: string }; Returns: number }
+      record_wallet_pin_failure: { Args: { p_user_id: string }; Returns: Json }
+      record_wallet_pin_success: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
       recusar_transferencia: {
         Args: { p_transferencia_id: string; p_user_id: string }
         Returns: boolean
       }
+      renovar_creditos_mv: { Args: { p_assinatura_id: string }; Returns: Json }
       reservar_mesa: {
         Args: { p_evento_id: string; p_mesa_id: string; p_user_id: string }
         Returns: Json
       }
+      resgatar_beneficio_mv: { Args: { p_config_id: string }; Returns: Json }
+      restore_bloqueio: { Args: { p_id: string }; Returns: boolean }
+      restore_comemoracao_faixa: { Args: { p_id: string }; Returns: boolean }
+      restore_convidado_lista: { Args: { p_id: string }; Returns: boolean }
+      restore_cupom: { Args: { p_id: string }; Returns: boolean }
+      restore_draft: { Args: { p_id: string }; Returns: boolean }
+      restore_equipe_evento: { Args: { p_id: string }; Returns: boolean }
+      restore_friendship: { Args: { p_id: string }; Returns: boolean }
+      restore_infracao_mais_vanta: { Args: { p_id: string }; Returns: boolean }
+      restore_lote: { Args: { p_id: string }; Returns: boolean }
+      restore_mais_vanta_config_evento: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
+      restore_mesa: { Args: { p_id: string }; Returns: boolean }
+      restore_notification: { Args: { p_id: string }; Returns: boolean }
+      restore_push_subscription: { Args: { p_id: string }; Returns: boolean }
+      restore_push_template: { Args: { p_id: string }; Returns: boolean }
+      restore_site_content: { Args: { p_key: string }; Returns: boolean }
+      restore_vanta_indica: { Args: { p_id: string }; Returns: boolean }
+      restore_variacao_ingresso: { Args: { p_id: string }; Returns: boolean }
       search_users: {
         Args: { p_limit?: number; p_offset?: number; p_query: string }
         Returns: {
@@ -6695,6 +8154,62 @@ export type Database = {
         Returns: Json
       }
       sign_ticket_token: { Args: { p_ticket_id: string }; Returns: string }
+      soft_delete_bloqueio: {
+        Args: { p_bloqueado_id: string }
+        Returns: boolean
+      }
+      soft_delete_comemoracao_faixa: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
+      soft_delete_convidado_lista: { Args: { p_id: string }; Returns: boolean }
+      soft_delete_cupom: { Args: { p_id: string }; Returns: boolean }
+      soft_delete_draft: { Args: { p_id: string }; Returns: boolean }
+      soft_delete_drafts_self_by_tipo: {
+        Args: { p_tipo: string }
+        Returns: number
+      }
+      soft_delete_equipe_by_evento: {
+        Args: { p_evento_id: string }
+        Returns: number
+      }
+      soft_delete_equipe_evento: { Args: { p_id: string }; Returns: boolean }
+      soft_delete_friendship_with: {
+        Args: { p_other_id: string }
+        Returns: number
+      }
+      soft_delete_infracao_mais_vanta: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
+      soft_delete_lote: { Args: { p_id: string }; Returns: boolean }
+      soft_delete_lotes_by_ids: { Args: { p_ids: string[] }; Returns: number }
+      soft_delete_mais_vanta_config_evento: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
+      soft_delete_mesa: { Args: { p_id: string }; Returns: boolean }
+      soft_delete_notification: { Args: { p_id: string }; Returns: boolean }
+      soft_delete_push_subscription_by_endpoint: {
+        Args: { p_endpoint: string }
+        Returns: boolean
+      }
+      soft_delete_push_subscriptions_self: { Args: never; Returns: number }
+      soft_delete_push_template: { Args: { p_id: string }; Returns: boolean }
+      soft_delete_site_content: { Args: { p_key: string }; Returns: boolean }
+      soft_delete_vanta_indica: { Args: { p_id: string }; Returns: boolean }
+      soft_delete_variacao_ingresso: {
+        Args: { p_id: string }
+        Returns: boolean
+      }
+      soft_delete_variacoes_by_ids: {
+        Args: { p_ids: string[] }
+        Returns: number
+      }
+      soft_delete_variacoes_by_lotes: {
+        Args: { p_lote_ids: string[] }
+        Returns: number
+      }
       top_vendidos_24h: {
         Args: { p_cidade: string; p_limit?: number }
         Returns: {
@@ -6732,6 +8247,10 @@ export type Database = {
         Args: { p_tenant_id: string; p_tenant_type: string; p_user_id: string }
         Returns: boolean
       }
+      usuario_tem_desconto_mv_elegivel: {
+        Args: { p_evento_id: string; p_user_id: string }
+        Returns: boolean
+      }
       validar_consistencia_permissoes: {
         Args: never
         Returns: {
@@ -6753,6 +8272,7 @@ export type Database = {
         Returns: string
       }
       vanta_require_auth: { Args: never; Returns: string }
+      vanta_require_not_impersonation: { Args: never; Returns: undefined }
       vanta_require_self_or_admin: {
         Args: { p_target_user_id: string }
         Returns: string
@@ -6762,6 +8282,7 @@ export type Database = {
         Returns: undefined
       }
       verify_ticket_token: { Args: { p_token: string }; Returns: string }
+      vitrine_seed_eventos: { Args: never; Returns: string }
     }
     Enums: {
       area_ingresso: "VIP" | "PISTA" | "CAMAROTE" | "BACKSTAGE" | "OUTRO"
