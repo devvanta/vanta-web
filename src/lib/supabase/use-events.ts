@@ -87,8 +87,9 @@ function toEventCard(row: EventoRow): EventCardData {
   } else if (totalCapacity > 0 && totalRemaining / totalCapacity < 0.1) {
     status = "lowStock";
   } else {
+    // Hotfix Dan msg 5449: renomeado "endingSoon" → "startingSoon" (bug semântico)
     const hoursUntil = (start.getTime() - now.getTime()) / (1000 * 60 * 60);
-    if (hoursUntil > 0 && hoursUntil < 24) status = "endingSoon";
+    if (hoursUntil > 0 && hoursUntil < 24) status = "startingSoon";
   }
 
   return {

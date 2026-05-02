@@ -96,7 +96,7 @@ function getEventStatus(
 
   if (start <= now && (!end || end >= now)) return "happening";
 
-  // Display-only badge: "lowStock" / "endingSoon". These are visual hints, not access control.
+  // Display-only badge: "lowStock" / "startingSoon". These are visual hints, not access control.
   // Actual stock enforcement is via processar_compra_checkout RPC (atomic decrement).
   if (row.lotes) {
     let totalRemaining = 0;
@@ -113,10 +113,12 @@ function getEventStatus(
     }
   }
 
-  // Check ending soon (starts within 24h)
+  // Hotfix Dan msg 5449 (2026-05-02): renomeado "endingSoon" → "startingSoon".
+  // Bug semântico: status era setado quando evento COMEÇA em <24h, mas label dizia
+  // "Acaba em breve" (oposto). Status correto = "Começa em breve".
   const hoursUntil =
     (start.getTime() - now.getTime()) / (1000 * 60 * 60);
-  if (hoursUntil > 0 && hoursUntil < 24) return "endingSoon";
+  if (hoursUntil > 0 && hoursUntil < 24) return "startingSoon";
 
   return undefined;
 }

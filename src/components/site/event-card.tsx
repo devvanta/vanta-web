@@ -12,7 +12,7 @@ function extractImageUrl(gradient: string): string | null {
   return match ? match[2] : null;
 }
 
-export type EventStatus = "happening" | "endingSoon" | "lowStock";
+export type EventStatus = "happening" | "startingSoon" | "lowStock";
 
 export type EventCardData = {
   slug: string;
@@ -45,9 +45,9 @@ const statusStyles: Record<
     className: "bg-success/20 border border-success/40 text-success",
     pulse: true,
   },
-  endingSoon: {
-    label: "Acaba em breve",
-    className: "bg-error/15 border border-error/40 text-error",
+  startingSoon: {
+    label: "Começa em breve",
+    className: "bg-warning/15 border border-warning/40 text-warning",
     pulse: false,
   },
   lowStock: {

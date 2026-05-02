@@ -196,9 +196,9 @@ export default async function EventPage({
                     Últimas vagas
                   </span>
                 )}
-                {event.status === "endingSoon" && (
-                  <span className="px-3 py-1 rounded-full text-[0.6rem] font-semibold uppercase tracking-[0.18em] bg-error/15 border border-error/40 text-error">
-                    Acaba em breve
+                {event.status === "startingSoon" && (
+                  <span className="px-3 py-1 rounded-full text-[0.6rem] font-semibold uppercase tracking-[0.18em] bg-warning/15 border border-warning/40 text-warning">
+                    Começa em breve
                   </span>
                 )}
               </div>
